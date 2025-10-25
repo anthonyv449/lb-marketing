@@ -22,20 +22,6 @@ import {
   Youtube,
 } from "lucide-react";
 
-/**
- * A simple marketing dashboard UI for creating and viewing social media posts.
- *
- * This component provides two main sections:
- *  1. Compose – a form where users can draft a new post. It allows selection
- *     of a target platform, tone, an optional media URL, and the post content.
- *     A schedule toggle lets users choose to schedule immediately or not.
- *  2. Posts – displays a scrollable list of posts that have been created
- *     in this session. Each post card shows the platform, tone, content and
- *     whether or not the post was scheduled.
- *
- * Note: In a production application you would likely persist posts to a backend
- * service. For this simple UI they live only in local state.
- */
 export default function SimpleMarketingDashboard() {
   interface Post {
     platform: string;
@@ -50,6 +36,8 @@ export default function SimpleMarketingDashboard() {
   const [content, setContent] = useState<string>("");
   const [schedule, setSchedule] = useState<boolean>(false);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const platformOptions = [
     { label: "Twitter", value: "twitter", icon: Twitter },
@@ -66,25 +54,77 @@ export default function SimpleMarketingDashboard() {
     { label: "Inspirational", value: "inspirational" },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Map UI platform values to backend enum values
+  const mapUiToBackendPlatform = (uiPlatform: string) => {
+    if (uiPlatform === "twitter") return "x"; // backend uses `x` for Twitter
+    return uiPlatform;
+  };
+
+  // Map backend platform values to UI equivalents for displaying icons
+  const mapBackendToUiPlatform = (backendPlatform: string) => {
+    if (backendPlatform === "x") return "twitter";
+    return backendPlatform;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     if (!content.trim()) return;
-    const newPost: Post = {
-      platform,
-      tone,
-      mediaUrl: mediaUrl.trim(),
+    setLoading(true);
+
+    // Build payload expected by backend ScheduledPostCreate
+    // Note: backend requires `business_id` and `scheduled_at`.
+    // Assumption: Use business_id = 1 by default (project doesn't expose business picker in this UI).
+    // If scheduling is toggled, treat it as "schedule immediately" (use now). The backend requires a datetime.
+    const payload = {
+      business_id: 1,
+      platform: mapUiToBackendPlatform(platform),
       content: content.trim(),
-      schedule,
+      scheduled_at: new Date().toISOString(),
+      campaign_id: null,
+      media_asset_id: null,
     };
-    setPosts([newPost, ...posts]);
-    // reset form
-    setContent("");
-    setMediaUrl("");
-    setSchedule(false);
+
+    try {
+      const res = await fetch("/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      const saved = await res.json();
+
+      // saved should conform to ScheduledPostOut. Map to local Post shape for display.
+      const displayPost: Post = {
+        platform: mapBackendToUiPlatform(saved.platform),
+        tone,
+        mediaUrl: mediaUrl.trim(),
+        content: saved.content ?? content.trim(),
+        schedule: !!saved.scheduled_at,
+      };
+
+      setPosts([displayPost, ...posts]);
+
+      // reset form
+      setContent("");
+      setMediaUrl("");
+      setSchedule(false);
+    } catch (err: any) {
+      setError(err?.message || "Failed to create post");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getPlatformIcon = (platformKey: string) => {
-    const found = platformOptions.find((p) => p.value === platformKey);
+    // Accept both UI and backend keys (backend may return 'x' for Twitter)
+    const normalized = platformKey === "x" ? "twitter" : platformKey;
+    const found = platformOptions.find((p) => p.value === normalized);
     return found ? <found.icon className="w-4 h-4 mr-2" /> : null;
   };
 
@@ -170,9 +210,12 @@ export default function SimpleMarketingDashboard() {
               <Label htmlFor="schedule">Schedule immediately</Label>
             </div>
             <div className="md:col-span-2 flex justify-end">
-              <Button type="submit" className="w-full md:w-auto">
-                Create Post
-              </Button>
+              <div className="flex flex-col w-full md:w-auto">
+                {error && <div className="text-sm text-red-500 mb-2">{error}</div>}
+                <Button type="submit" className="w-full md:w-auto" disabled={loading}>
+                  {loading ? "Creating..." : "Create Post"}
+                </Button>
+              </div>
             </div>
           </form>
         </TabsContent>
