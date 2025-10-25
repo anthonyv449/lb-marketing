@@ -11,4 +11,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Dev server proxy to forward API requests to backend to avoid CORS during development
+  server: {
+    proxy: {
+      // Proxy any request starting with /posts (and add other routes as needed)
+      '/posts': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // If you want to proxy all API routes under /api, use '/api': 'http://localhost:8000'
+    }
+  },
 })
