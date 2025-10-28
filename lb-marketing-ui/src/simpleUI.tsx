@@ -35,6 +35,7 @@ export default function SimpleMarketingDashboard() {
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const [schedule, setSchedule] = useState<boolean>(false);
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,14 +76,20 @@ export default function SimpleMarketingDashboard() {
     // Build payload expected by backend ScheduledPostCreate
     // Note: backend requires `business_id` and `scheduled_at`.
     // Assumption: Use business_id = 1 by default (project doesn't expose business picker in this UI).
-    // If scheduling is toggled, treat it as "schedule immediately" (use now). The backend requires a datetime.
+    // If scheduling is toggled, use the selected date. Otherwise, use current time.
+    // All times are explicitly converted to UTC
+    const scheduledAt = schedule && selectedDate 
+      ? new Date(selectedDate).toISOString() 
+      : new Date().toISOString();
+    
     const payload = {
       business_id: 1,
       platform: mapUiToBackendPlatform(platform),
       content: content.trim(),
-      scheduled_at: new Date().toISOString(),
+      scheduled_at: scheduledAt,
       campaign_id: null,
       media_asset_id: null,
+      sched: schedule && selectedDate ? selectedDate : null,
     };
 
     try {
@@ -114,6 +121,7 @@ export default function SimpleMarketingDashboard() {
       setContent("");
       setMediaUrl("");
       setSchedule(false);
+      setSelectedDate("");
     } catch (err: any) {
       setError(err?.message || "Failed to create post");
     } finally {
@@ -207,8 +215,21 @@ export default function SimpleMarketingDashboard() {
                 checked={schedule}
                 onCheckedChange={(checked) => setSchedule(checked)}
               />
-              <Label htmlFor="schedule">Schedule immediately</Label>
+              <Label htmlFor="schedule">Schedule for later</Label>
             </div>
+            {/* Date picker - only show when schedule is enabled */}
+            {schedule && (
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <Label htmlFor="scheduledDate">Select Date & Time (UTC)</Label>
+                <Input
+                  id="scheduledDate"
+                  type="datetime-local"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+              </div>
+            )}
             <div className="md:col-span-2 flex justify-end">
               <div className="flex flex-col w-full md:w-auto">
                 {error && <div className="text-sm text-red-500 mb-2">{error}</div>}
@@ -254,7 +275,7 @@ export default function SimpleMarketingDashboard() {
                         </a>
                       )}
                       <p className="text-xs mt-2 text-muted-foreground">
-                        {post.schedule ? "Scheduled immediately" : "Not scheduled"}
+                        {post.schedule ? "Scheduled" : "Not scheduled"}
                       </p>
                     </CardContent>
                   </Card>
