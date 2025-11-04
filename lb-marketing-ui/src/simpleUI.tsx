@@ -67,6 +67,24 @@ export default function SimpleMarketingDashboard() {
     return backendPlatform;
   };
 
+  // Helper function to convert local datetime to UTC ISO string
+  const convertLocalToUTC = (localDateTimeString: string): string => {
+    // datetime-local input gives us a string like "2024-01-01T12:00" (no timezone)
+    // JavaScript interprets this as local time when creating a Date object
+    const localDate = new Date(localDateTimeString);
+    // Convert to UTC ISO string for the API
+    return localDate.toISOString();
+  };
+
+  // Helper function to get timezone name for display
+  const getTimezoneName = (): string => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return "local time";
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -76,10 +94,10 @@ export default function SimpleMarketingDashboard() {
     // Build payload expected by backend ScheduledPostCreate
     // Note: backend requires `business_id` and `scheduled_at`.
     // Assumption: Use business_id = 1 by default (project doesn't expose business picker in this UI).
-    // If scheduling is toggled, use the selected date. Otherwise, use current time.
-    // All times are explicitly converted to UTC
+    // If scheduling is toggled, use the selected date (converted from local to UTC).
+    // Otherwise, use current time (already in UTC via toISOString).
     const scheduledAt = schedule && selectedDate 
-      ? new Date(selectedDate).toISOString() 
+      ? convertLocalToUTC(selectedDate)
       : new Date().toISOString();
     
     const payload = {
@@ -89,7 +107,6 @@ export default function SimpleMarketingDashboard() {
       scheduled_at: scheduledAt,
       campaign_id: null,
       media_asset_id: null,
-      sched: schedule && selectedDate ? selectedDate : null,
     };
 
     try {
@@ -220,7 +237,9 @@ export default function SimpleMarketingDashboard() {
             {/* Date picker - only show when schedule is enabled */}
             {schedule && (
               <div className="flex flex-col gap-2 md:col-span-2">
-                <Label htmlFor="scheduledDate">Select Date & Time (UTC)</Label>
+                <Label htmlFor="scheduledDate">
+                  Select Date & Time ({getTimezoneName()}) - will be saved as UTC
+                </Label>
                 <Input
                   id="scheduledDate"
                   type="datetime-local"
