@@ -14,6 +14,14 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: List[AnyHttpUrl] = []
 
+    # Twitter/X OAuth 2.0 credentials
+    TWITTER_CLIENT_ID: str = ""
+    TWITTER_CLIENT_SECRET: str = ""
+    # Redirect URI should point to the backend callback endpoint
+    # In production, this should be your actual domain
+    TWITTER_REDIRECT_URI: str = "http://localhost:8000/oauth/x/callback"
+    TWITTER_BEARER_TOKEN: str = ""
+
     @property
     def database_url(self) -> str:
         return (
