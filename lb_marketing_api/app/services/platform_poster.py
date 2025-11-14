@@ -73,8 +73,8 @@ def post_to_x(
             try:
                 error_detail = e.response.json()
                 error_msg += f" - {error_detail}"
-            except:
-                error_msg += f" - Status: {e.response.status_code}"
+            except Exception as inner_e:
+                error_msg += f" - Status: {e.response.status_code} (Error parsing response: {str(inner_e)})"
         raise PlatformPostError(error_msg) from e
 
 
@@ -143,8 +143,8 @@ def post_to_facebook(
             try:
                 error_detail = e.response.json()
                 error_msg += f" - {error_detail}"
-            except:
-                error_msg += f" - Status: {e.response.status_code}"
+            except Exception as inner_e:
+                error_msg += f" - Status: {e.response.status_code} (Error parsing response: {str(inner_e)})"
         raise PlatformPostError(error_msg) from e
 
 
@@ -226,10 +226,11 @@ def post_scheduled_post(
         
         return scheduled_post
         
-    except PlatformPostError:
+    except PlatformPostError as e:
         # Update status to failed
         scheduled_post.status = models.PostStatus.failed
         db.commit()
         db.refresh(scheduled_post)
-        raise
+        # Re-raise with the exception message
+        raise PlatformPostError(str(e)) from e
 

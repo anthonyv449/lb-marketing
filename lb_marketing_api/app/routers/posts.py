@@ -57,7 +57,8 @@ def publish_all_posts(db: Session = Depends(get_db)):
             updated_post = post_scheduled_post(post, db)
             published_posts.append(updated_post)
         except PlatformPostError as e:
-            errors.append(f"Post {post.id}: {str(e)}")
+            error_msg = f"Post {post.id}: {str(e)}"
+            errors.append(error_msg)
     
     # Return published posts, with errors if any
     if errors:
@@ -81,4 +82,5 @@ def publish_post(post_id: int, db: Session = Depends(get_db)):
         updated_post = post_scheduled_post(post, db)
         return updated_post
     except PlatformPostError as e:
-        raise HTTPException(400, str(e))
+        error_msg = str(e)
+        raise HTTPException(status_code=400, detail=error_msg)

@@ -5,6 +5,9 @@ from sqlalchemy import (
     Column, Integer, String, DateTime, ForeignKey, Text, Enum as SAEnum, UniqueConstraint
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from passlib.hash import argon2
+
+pwd_context = argon2
 
 from .db import Base
 
@@ -22,16 +25,42 @@ class PostStatus(str, Enum):
     failed = "failed"
     canceled = "canceled"
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+    social_profiles = relationship("SocialProfile", back_populates="user", cascade="all, delete-orphan")
+    businesses = relationship("Business", back_populates="user", cascade="all, delete-orphan")
+
+    def set_password(self, password: str):
+        """Hash and set the user's password."""
+        print("SET_PASSWORD DEBUG >>>", repr(password))
+        print("chars:", len(password))
+        print("bytes:", len(password.encode("utf-8")))
+        self.password_hash = pwd_context.hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """Check if the provided password matches the user's password."""
+        return pwd_context.verify(password, self.password_hash)
+
 class Business(Base):
     __tablename__ = "businesses"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255))
     phone: Mapped[str | None] = mapped_column(String(50))
     website: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
+    user = relationship("User", back_populates="businesses")
     locations = relationship("Location", back_populates="business", cascade="all, delete-orphan")
     social_profiles = relationship("SocialProfile", back_populates="business", cascade="all, delete-orphan")
     campaigns = relationship("Campaign", back_populates="business", cascade="all, delete-orphan")
@@ -56,9 +85,10 @@ class Location(Base):
 
 class SocialProfile(Base):
     __tablename__ = "social_profiles"
-    __table_args__ = (UniqueConstraint("business_id", "platform", "handle", name="uq_profile_business_platform_handle"),)
+    __table_args__ = (UniqueConstraint("user_id", "platform", "handle", name="uq_profile_user_platform_handle"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"))
     platform: Mapped[PlatformEnum] = mapped_column(SAEnum(PlatformEnum), nullable=False)
     handle: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -67,6 +97,7 @@ class SocialProfile(Base):
     status: Mapped[str] = mapped_column(String(50), default="connected")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
+    user = relationship("User", back_populates="social_profiles")
     business = relationship("Business", back_populates="social_profiles")
 
 class Campaign(Base):

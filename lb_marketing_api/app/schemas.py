@@ -60,6 +60,7 @@ class LocationOut(BaseModel):
         from_attributes = True
 
 class SocialProfileCreate(BaseModel):
+    user_id: int
     business_id: int
     platform: PlatformEnum
     handle: str
@@ -68,6 +69,7 @@ class SocialProfileCreate(BaseModel):
 
 class SocialProfileOut(BaseModel):
     id: int
+    user_id: int
     business_id: int
     platform: PlatformEnum
     handle: str
@@ -132,3 +134,26 @@ class ScheduledPostOut(BaseModel):
     created_at: datetime
     class Config:
         from_attributes = True
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    full_name: Optional[str] = None
+
+class UserOut(BaseModel):
+    id: int
+    email: str
+    full_name: Optional[str] = None
+    created_at: datetime
+    is_active: bool
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut

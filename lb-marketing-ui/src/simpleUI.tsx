@@ -21,11 +21,14 @@ import {
   Linkedin,
   Youtube,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { api } from "./lib/api";
+import { getUser, isAuthenticated, clearAuth, type User } from "./lib/auth";
+import Login from "./components/Login";
 
 export default function SimpleMarketingDashboard() {
+  const [user, setUser] = useState<User | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   interface Post {
     platform: string;
     tone: string;
@@ -42,37 +45,10 @@ export default function SimpleMarketingDashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [xConnected, setXConnected] = useState<boolean>(false);
-  const [xHandle, setXHandle] = useState<string | null>(null);
+  const [platformConnections, setPlatformConnections] = useState<Record<string, { connected: boolean; handle: string | null }>>({});
   const [checkingConnection, setCheckingConnection] = useState<boolean>(true);
   const [publishing, setPublishing] = useState<boolean>(false);
-
-  const platformOptions = [
-    { label: "Twitter", value: "twitter", icon: Twitter },
-    { label: "Facebook", value: "facebook", icon: Facebook },
-    { label: "Instagram", value: "instagram", icon: Instagram },
-    { label: "LinkedIn", value: "linkedin", icon: Linkedin },
-    { label: "YouTube", value: "youtube", icon: Youtube },
-  ];
-
-  const toneOptions = [
-    { label: "Professional", value: "professional" },
-    { label: "Casual", value: "casual" },
-    { label: "Playful", value: "playful" },
-    { label: "Inspirational", value: "inspirational" },
-  ];
-
-  // Map UI platform values to backend enum values
-  const mapUiToBackendPlatform = (uiPlatform: string) => {
-    if (uiPlatform === "twitter") return "x"; // backend uses `x` for Twitter
-    return uiPlatform;
-  };
-
-  // Map backend platform values to UI equivalents for displaying icons
-  const mapBackendToUiPlatform = (backendPlatform: string) => {
-    if (backendPlatform === "x") return "twitter";
-    return backendPlatform;
-  };
+  const [disconnecting, setDisconnecting] = useState<Record<string, boolean>>({});
 
   // Helper function to convert local datetime to UTC ISO string
   const convertLocalToUTC = (localDateTimeString: string): string => {
@@ -92,9 +68,87 @@ export default function SimpleMarketingDashboard() {
     }
   };
 
-  // Check X connection status on mount
+  // Map UI platform values to backend platform values
+  const mapUiToBackendPlatform = (uiPlatform: string): string => {
+    if (uiPlatform === "twitter") return "x";
+    return uiPlatform;
+  };
+
+  // Map backend platform values to UI platform values
+  const mapBackendToUiPlatform = (backendPlatform: string): string => {
+    if (backendPlatform === "x") return "twitter";
+    return backendPlatform;
+  };
+
+  const platformOptions = [
+    { label: "Twitter", value: "twitter", icon: Twitter },
+    { label: "Facebook", value: "facebook", icon: Facebook },
+    { label: "Instagram", value: "instagram", icon: Instagram },
+    { label: "LinkedIn", value: "linkedin", icon: Linkedin },
+    { label: "YouTube", value: "youtube", icon: Youtube },
+  ];
+
+  const isPlatformConnected = (platform: string): boolean => {
+    return platformConnections[platform]?.connected ?? false;
+  };
+
+  const checkAllPlatformConnections = async () => {
+    if (!user) return; // Only check if user is authenticated
+    setCheckingConnection(true);
+    try {
+      const res = await api.getAllPlatformStatus();
+      if (res.ok) {
+        const data = await res.json();
+        // Convert backend platform keys to UI platform keys
+        const uiConnections: Record<string, { connected: boolean; handle: string | null }> = {};
+        for (const [backendPlatform, status] of Object.entries(data)) {
+          const uiPlatform = mapBackendToUiPlatform(backendPlatform);
+          uiConnections[uiPlatform] = status as { connected: boolean; handle: string | null };
+        }
+        setPlatformConnections(uiConnections);
+      }
+    } catch (err) {
+      console.error("Failed to check platform connections:", err);
+      // Silently fail - OAuth is optional
+    } finally {
+      setCheckingConnection(false);
+    }
+  };
+
+  // Check authentication on mount
   useEffect(() => {
-    checkXConnection();
+    const checkAuth = async () => {
+      if (isAuthenticated()) {
+        const storedUser = getUser();
+        if (storedUser) {
+          setUser(storedUser);
+          // Verify token is still valid
+          try {
+            const res = await api.getCurrentUser();
+            if (res.ok) {
+              const currentUser = await res.json();
+              setUser(currentUser);
+            } else {
+              // Token invalid, clear auth
+              clearAuth();
+              setUser(null);
+            }
+          } catch {
+            clearAuth();
+            setUser(null);
+          }
+        }
+      }
+      setCheckingAuth(false);
+    };
+    checkAuth();
+  }, []);
+
+  // Check all platform connection statuses on mount and when user changes
+  useEffect(() => {
+    if (!user) return; // Only check if user is authenticated
+    
+    checkAllPlatformConnections();
     
     // Handle OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -103,30 +157,79 @@ export default function SimpleMarketingDashboard() {
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
       // Check connection status again
-      setTimeout(() => checkXConnection(), 1000);
+      setTimeout(() => checkAllPlatformConnections(), 1000);
     }
-  }, []);
+  }, [user]);
 
-  const checkXConnection = async () => {
-    setCheckingConnection(true);
-    try {
-      const res = await api.checkXStatus(1);
-      if (res.ok) {
-        const data = await res.json();
-        setXConnected(data.connected);
-        setXHandle(data.handle);
+  // Update platform selection if current platform becomes disconnected
+  useEffect(() => {
+    if (!user) return; // Only run if user is authenticated
+    if (!checkingConnection && !isPlatformConnected(platform)) {
+      // Find first connected platform
+      const firstConnected = platformOptions.find(opt => isPlatformConnected(opt.value));
+      if (firstConnected) {
+        setPlatform(firstConnected.value);
       }
-    } catch (err) {
-      console.error("Failed to check X connection:", err);
-      // Silently fail - OAuth is optional
-    } finally {
-      setCheckingConnection(false);
     }
+  }, [platformConnections, checkingConnection, platform, user]);
+
+  const handleLoginSuccess = (loggedInUser: User) => {
+    setUser(loggedInUser);
   };
 
-  const handleXSignIn = () => {
-    // Redirect to backend OAuth endpoint
-    api.authorizeX(1);
+  const handleLogout = () => {
+    api.logout();
+    clearAuth();
+    setUser(null);
+  };
+
+  // Show login if not authenticated
+  if (checkingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  const toneOptions = [
+    { label: "Professional", value: "professional" },
+    { label: "Casual", value: "casual" },
+    { label: "Playful", value: "playful" },
+    { label: "Inspirational", value: "inspirational" },
+  ];
+
+  const getPlatformHandle = (platform: string): string | null => {
+    return platformConnections[platform]?.handle ?? null;
+  };
+
+  const handlePlatformConnect = (platform: string) => {
+    const backendPlatform = mapUiToBackendPlatform(platform);
+    api.authorizePlatform(backendPlatform);
+  };
+
+  const handlePlatformDisconnect = async (platform: string) => {
+    const backendPlatform = mapUiToBackendPlatform(platform);
+    setDisconnecting(prev => ({ ...prev, [platform]: true }));
+    try {
+      const res = await api.disconnectPlatform(backendPlatform);
+      if (res.ok) {
+        // Refresh connection status
+        await checkAllPlatformConnections();
+      } else {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+    } catch (err: any) {
+      console.error(`Failed to disconnect ${platform}:`, err);
+      alert(err?.message || `Failed to disconnect from ${platform}`);
+    } finally {
+      setDisconnecting(prev => ({ ...prev, [platform]: false }));
+    }
   };
 
   const handlePublishAll = async () => {
@@ -219,30 +322,51 @@ export default function SimpleMarketingDashboard() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Marketing Dashboard</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Marketing Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Logged in as {user.email}
+          </p>
+        </div>
         <div className="flex items-center gap-4">
-          {/* X Connection Status */}
-          <div className="flex items-center gap-2">
+          {/* Platform Connections */}
+          <div className="flex items-center gap-2 flex-wrap">
             {checkingConnection ? (
-              <span className="text-sm text-muted-foreground">Checking...</span>
-            ) : xConnected ? (
-              <div className="flex items-center gap-2 text-sm text-green-600">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>X: @{xHandle}</span>
-              </div>
+              <span className="text-sm text-muted-foreground">Checking connections...</span>
             ) : (
-              <div className="flex items-center gap-2">
-                <XCircle className="w-4 h-4 text-red-500" />
-                <Button
-                  onClick={handleXSignIn}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Twitter className="w-4 h-4" />
-                  Connect X
-                </Button>
-              </div>
+              platformOptions.map((opt) => {
+                const connected = isPlatformConnected(opt.value);
+                const handle = getPlatformHandle(opt.value);
+                const Icon = opt.icon;
+                const isDisconnecting = disconnecting[opt.value] || false;
+                
+                return (
+                  <div key={opt.value} className="flex items-center gap-2">
+                    {connected ? (
+                      <Button
+                        onClick={() => handlePlatformDisconnect(opt.value)}
+                        variant="outline"
+                        size="sm"
+                        disabled={isDisconnecting}
+                        className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        {isDisconnecting ? "Disconnecting..." : `Connected${handle ? `: @${handle}` : ""}`}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handlePlatformConnect(opt.value)}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
+                      >
+                        <Icon className="w-4 h-4" />
+                        Connect {opt.label}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
           {/* Publish All Button */}
@@ -253,6 +377,14 @@ export default function SimpleMarketingDashboard() {
             size="sm"
           >
             {publishing ? "Publishing..." : "Publish All"}
+          </Button>
+          {/* Logout Button */}
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            size="sm"
+          >
+            Logout
           </Button>
         </div>
       </div>
@@ -278,12 +410,20 @@ export default function SimpleMarketingDashboard() {
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
-                  {platformOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="flex items-center">
-                      <opt.icon className="w-4 h-4 mr-2" />
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+                  {platformOptions.map((opt) => {
+                    const connected = isPlatformConnected(opt.value);
+                    return (
+                      <SelectItem 
+                        key={opt.value} 
+                        value={opt.value} 
+                        className="flex items-center"
+                        disabled={!connected}
+                      >
+                        <opt.icon className="w-4 h-4 mr-2" />
+                        {opt.label} {connected ? "" : "(Not Connected)"}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
