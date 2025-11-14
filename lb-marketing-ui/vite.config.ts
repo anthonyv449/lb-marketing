@@ -15,21 +15,53 @@ export default defineConfig({
   // In production, set VITE_API_URL environment variable instead
   server: {
     proxy: {
-      // Proxy any request starting with /posts (and add other routes as needed)
+      // Proxy all API routes to backend
       '/posts': {
-        target: process.env.VITE_API_URL || 'http://localhost:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
       // Proxy OAuth routes
       '/oauth': {
-        target: process.env.VITE_API_URL || 'http://localhost:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },
       // Proxy social-profiles routes
       '/social-profiles': {
-        target: process.env.VITE_API_URL || 'http://localhost:8000',
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy authentication routes
+      '/auth': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Proxy other API routes (businesses, locations, campaigns, assets, etc.)
+      '/businesses': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/locations': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/campaigns': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/assets': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/healthz': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       },

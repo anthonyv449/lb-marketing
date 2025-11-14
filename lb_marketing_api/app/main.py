@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .db import Base, engine, get_db
 from . import models
-from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth
+from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth, auth
 
 app = FastAPI(title=settings.APP_NAME)
 
@@ -42,6 +42,7 @@ def seed(db: Session = Depends(get_db)):
     return {"ok": True}
 
 # Routers
+app.include_router(auth.router)
 app.include_router(businesses.router)
 app.include_router(locations.router)
 app.include_router(social_profiles.router)

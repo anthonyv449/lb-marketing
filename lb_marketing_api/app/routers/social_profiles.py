@@ -18,7 +18,8 @@ def create_social_profile(payload: schemas.SocialProfileCreate, db: Session = De
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(400, f"Could not create social profile: {e}")
+        error_msg = f"Could not create social profile: {str(e)}"
+        raise HTTPException(status_code=500, detail=error_msg)
     db.refresh(obj)
     return obj
 

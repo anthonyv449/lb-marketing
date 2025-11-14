@@ -14,6 +14,9 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: List[AnyHttpUrl] = []
 
+    # JWT Secret Key for authentication
+    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    
     # Twitter/X OAuth 2.0 credentials
     TWITTER_CLIENT_ID: str = ""
     TWITTER_CLIENT_SECRET: str = ""
