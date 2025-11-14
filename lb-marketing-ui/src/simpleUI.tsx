@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent } from "./components/ui/card";
 import { Input } from "./components/ui/input";
 import { Textarea } from "./components/ui/textarea";
@@ -20,7 +20,10 @@ import {
   Facebook,
   Linkedin,
   Youtube,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
+import { api } from "./lib/api";
 
 export default function SimpleMarketingDashboard() {
   interface Post {
@@ -39,6 +42,10 @@ export default function SimpleMarketingDashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [xConnected, setXConnected] = useState<boolean>(false);
+  const [xHandle, setXHandle] = useState<string | null>(null);
+  const [checkingConnection, setCheckingConnection] = useState<boolean>(true);
+  const [publishing, setPublishing] = useState<boolean>(false);
 
   const platformOptions = [
     { label: "Twitter", value: "twitter", icon: Twitter },
@@ -85,6 +92,66 @@ export default function SimpleMarketingDashboard() {
     }
   };
 
+  // Check X connection status on mount
+  useEffect(() => {
+    checkXConnection();
+    
+    // Handle OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthParam = urlParams.get("oauth");
+    if (oauthParam === "success") {
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Check connection status again
+      setTimeout(() => checkXConnection(), 1000);
+    }
+  }, []);
+
+  const checkXConnection = async () => {
+    setCheckingConnection(true);
+    try {
+      const res = await api.checkXStatus(1);
+      if (res.ok) {
+        const data = await res.json();
+        setXConnected(data.connected);
+        setXHandle(data.handle);
+      }
+    } catch (err) {
+      console.error("Failed to check X connection:", err);
+      // Silently fail - OAuth is optional
+    } finally {
+      setCheckingConnection(false);
+    }
+  };
+
+  const handleXSignIn = () => {
+    // Redirect to backend OAuth endpoint
+    api.authorizeX(1);
+  };
+
+  const handlePublishAll = async () => {
+    setPublishing(true);
+    setError(null);
+    try {
+      const res = await api.publishAllPosts();
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      const published = await res.json();
+      alert(`Successfully published ${published.length} post(s)!`);
+      
+      // Optionally refresh posts list
+      // You might want to fetch posts from the API here
+    } catch (err: any) {
+      setError(err?.message || "Failed to publish posts");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -110,11 +177,7 @@ export default function SimpleMarketingDashboard() {
     };
 
     try {
-      const res = await fetch("/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", },
-        body: JSON.stringify(payload),
-      });
+      const res = await api.createPost(payload);
 
       if (!res.ok) {
         const text = await res.text();
@@ -155,7 +218,44 @@ export default function SimpleMarketingDashboard() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-bold">Marketing Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Marketing Dashboard</h1>
+        <div className="flex items-center gap-4">
+          {/* X Connection Status */}
+          <div className="flex items-center gap-2">
+            {checkingConnection ? (
+              <span className="text-sm text-muted-foreground">Checking...</span>
+            ) : xConnected ? (
+              <div className="flex items-center gap-2 text-sm text-green-600">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>X: @{xHandle}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <XCircle className="w-4 h-4 text-red-500" />
+                <Button
+                  onClick={handleXSignIn}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Twitter className="w-4 h-4" />
+                  Connect X
+                </Button>
+              </div>
+            )}
+          </div>
+          {/* Publish All Button */}
+          <Button
+            onClick={handlePublishAll}
+            disabled={publishing}
+            variant="default"
+            size="sm"
+          >
+            {publishing ? "Publishing..." : "Publish All"}
+          </Button>
+        </div>
+      </div>
       <Tabs defaultValue="compose">
         <TabsList className="bg-transparent mb-4">
           <TabsTrigger value="compose" className="px-4 py-2">Compose</TabsTrigger>
