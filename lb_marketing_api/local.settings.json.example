@@ -1,0 +1,21 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "APP_NAME": "LB Marketing API",
+    "APP_ENV": "development",
+    "DATABASE_HOST": "localhost",
+    "DATABASE_PORT": "5432",
+    "DATABASE_USER": "postgres",
+    "DATABASE_PASSWORD": "postgres",
+    "DATABASE_NAME": "lb-marketing",
+    "JWT_SECRET_KEY": "your-secret-key-change-in-production",
+    "CORS_ORIGINS": "",
+    "TWITTER_CLIENT_ID": "",
+    "TWITTER_CLIENT_SECRET": "",
+    "TWITTER_REDIRECT_URI": "http://localhost:7071/oauth/x/callback",
+    "TWITTER_BEARER_TOKEN": ""
+  }
+}
+

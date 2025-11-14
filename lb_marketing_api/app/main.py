@@ -19,10 +19,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create tables on startup (prototype)
+# Create tables on startup (development only)
+# In production, use Alembic migrations instead
 @app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
+async def on_startup():
+    if settings.APP_ENV == "development":
+        Base.metadata.create_all(bind=engine)
+    # Run migrations in production (Azure Functions)
+    elif settings.APP_ENV == "production":
+        try:
+            import alembic.config
+            alembic_cfg = alembic.config.Config("alembic.ini")
+            from alembic import command
+            command.upgrade(alembic_cfg, "head")
+        except Exception as e:
+            print(f"Warning: Could not run migrations: {e}")
 
 @app.get("/healthz")
 def healthz():
