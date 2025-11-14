@@ -48,8 +48,50 @@ Visit http://localhost:8000/docs for interactive OpenAPI.
 
 > Note: For MVP we persist tokens/plain strings. Add KMS/KeyVault later for secrets.
 
-## Migrations
-For rapid prototyping, tables are created at startup (`create_all`). For production, add Alembic migrations.
+## Database Migrations
+
+This project uses Alembic for database migrations. In development, tables are created automatically on startup. In production, use migrations.
+
+### Creating Migrations
+
+```bash
+# Create a new migration
+alembic revision --autogenerate -m "Description of changes"
+
+# Apply migrations
+alembic upgrade head
+
+# Rollback one migration
+alembic downgrade -1
+```
+
+### Initial Migration
+
+To create the initial migration from your existing models:
+
+```bash
+python scripts/create_initial_migration.py
+```
+
+## Azure Deployment
+
+This project is configured for deployment to Azure Functions with Azure Database for PostgreSQL.
+
+### Quick Start
+
+See [AZURE_QUICK_START.md](./AZURE_QUICK_START.md) for a 5-minute setup guide.
+
+### Full Documentation
+
+See [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) for comprehensive deployment instructions.
+
+### Key Files
+
+- `function_app.py` - Azure Functions entry point
+- `host.json` - Azure Functions configuration
+- `local.settings.json.example` - Local development settings template
+- `alembic/` - Database migration files
+- `azure-deploy.yml` - GitHub Actions workflow for CI/CD
 
 ## Test Data
 Use the `/seed` endpoint to insert a sample business and location.

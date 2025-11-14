@@ -12,3 +12,5 @@ passlib==1.7.4
 argon2-cffi==23.1.0
 python-multipart==0.0.9
 debugpy==1.8.11
+alembic==1.13.2
+azure-functions==1.18.0

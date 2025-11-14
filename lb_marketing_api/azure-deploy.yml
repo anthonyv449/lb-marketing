@@ -1,0 +1,50 @@
+# Azure Functions deployment configuration
+# This file can be used with GitHub Actions
+
+name: Deploy to Azure Functions
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: lb-marketing-api  # Change this to your Function App name
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install dependencies
+      run: |
+        cd lb_marketing_api
+        pip install -r requirements.txt
+        
+    - name: Run database migrations
+      env:
+        DATABASE_HOST: ${{ secrets.AZURE_DB_HOST }}
+        DATABASE_PORT: ${{ secrets.AZURE_DB_PORT }}
+        DATABASE_USER: ${{ secrets.AZURE_DB_USER }}
+        DATABASE_PASSWORD: ${{ secrets.AZURE_DB_PASSWORD }}
+        DATABASE_NAME: ${{ secrets.AZURE_DB_NAME }}
+      run: |
+        cd lb_marketing_api
+        alembic upgrade head
+        
+    - name: Deploy to Azure Functions
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+        package: ./lb_marketing_api
