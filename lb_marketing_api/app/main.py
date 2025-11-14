@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .db import Base, engine, get_db
 from . import models
-from .routers import businesses, locations, social_profiles, campaigns, assets, posts
+from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth
 
 app = FastAPI(title=settings.APP_NAME)
 
@@ -48,3 +48,4 @@ app.include_router(social_profiles.router)
 app.include_router(campaigns.router)
 app.include_router(assets.router)
 app.include_router(posts.router)
+app.include_router(oauth.router)

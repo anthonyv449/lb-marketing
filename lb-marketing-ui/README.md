@@ -1,73 +1,99 @@
-# React + TypeScript + Vite
+# LB Marketing UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Marketing dashboard UI for scheduling and publishing social media posts.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📝 Create and schedule posts for multiple platforms (Twitter/X, Facebook, Instagram, LinkedIn, YouTube)
+- ⏰ Schedule posts for future publishing
+- 🔗 OAuth integration for social media platforms
+- 📊 View and manage scheduled posts
+- 🚀 Publish all due posts with one click
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js 18+ installed
+- Backend API running (see `../lb_marketing_api/README.md`)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Development
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+2. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3. **Open in browser**:
+   Navigate to `http://localhost:5173`
+
+The dev server uses a proxy to forward API requests to `http://localhost:8000` (your backend).
+
+### Production Build
+
+1. **Set environment variable** (optional for development):
+   ```bash
+   # Create .env file
+   VITE_API_URL=https://api.yourdomain.com
+   ```
+
+2. **Build for production**:
+   ```bash
+   npm run build
+   ```
+
+3. **Preview production build**:
+   ```bash
+   npm run preview
+   ```
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `VITE_API_URL` | Backend API URL (e.g., `https://api.yourdomain.com`) | Production only |
+
+**Note**: In development, leave `VITE_API_URL` empty to use the Vite proxy.
+
+## Project Structure
+
+```
+src/
+├── components/       # UI components (shadcn/ui)
+├── lib/
+│   ├── api.ts      # API utility functions
+│   └── utils.ts    # Utility functions
+├── simpleUI.tsx    # Main dashboard component
+└── main.tsx        # Application entry point
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Available Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions for:
+- Vercel
+- Netlify
+- Azure Static Web Apps
+- Manual deployment
+
+## Tech Stack
+
+- **React 19** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Styling
+- **shadcn/ui** - UI component library
+- **Lucide React** - Icons
