@@ -21,6 +21,7 @@
   },
   "functionTimeout": "00:10:00",
   "http": {
+    "routePrefix": "api",
     "customHeaders": {
       "X-Content-Type-Options": "nosniff"
     }
