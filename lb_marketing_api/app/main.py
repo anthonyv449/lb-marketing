@@ -29,11 +29,28 @@ async def on_startup():
     elif settings.APP_ENV == "production":
         try:
             import alembic.config
-            alembic_cfg = alembic.config.Config("alembic.ini")
-            from alembic import command
-            command.upgrade(alembic_cfg, "head")
+            import os
+            from pathlib import Path
+            
+            # Ensure we're using the correct path for alembic.ini
+            alembic_ini_path = Path("alembic.ini")
+            if not alembic_ini_path.exists():
+                # Try alternative path (Azure Functions may have different working directory)
+                alembic_ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
+            
+            if alembic_ini_path.exists():
+                alembic_cfg = alembic.config.Config(str(alembic_ini_path))
+                from alembic import command
+                command.upgrade(alembic_cfg, "head")
+                print("✓ Database migrations completed successfully")
+            else:
+                print(f"⚠ Warning: alembic.ini not found at {alembic_ini_path}. Migrations skipped.")
         except Exception as e:
-            print(f"Warning: Could not run migrations: {e}")
+            import traceback
+            error_msg = f"❌ ERROR: Could not run migrations: {e}\n{traceback.format_exc()}"
+            print(error_msg)
+            # In production, we want to know about migration failures
+            # Consider logging to Application Insights or raising the error
 
 @app.get("/healthz")
 def healthz():
