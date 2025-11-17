@@ -3,8 +3,75 @@ Azure Functions entry point for FastAPI application.
 This file wraps the FastAPI app from app.main to work with Azure Functions.
 """
 
+import logging
+import os
+from pathlib import Path
+
 import azure.functions as func
 from azure.functions import AsgiMiddleware
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Run migrations at module import time (more reliable than lifespan events in Azure Functions)
+def run_migrations_on_import():
+    """Run migrations when module is imported - more reliable in Azure Functions."""
+    try:
+        from app.config import settings
+        
+        if settings.APP_ENV == "production":
+            logger.info("=== Running migrations on module import (Azure Functions) ===")
+            logger.info(f"APP_ENV: {settings.APP_ENV}")
+            logger.info(f"Current working directory: {os.getcwd()}")
+            
+            import alembic.config
+            from alembic import command
+            
+            # Try multiple paths for alembic.ini
+            possible_paths = [
+                Path("alembic.ini"),
+                Path(__file__).parent / "alembic.ini",
+                Path("/home/site/wwwroot/alembic.ini"),  # Azure Functions Linux
+                Path("D:/home/site/wwwroot/alembic.ini"),  # Azure Functions Windows
+            ]
+            
+            alembic_ini_path = None
+            for path in possible_paths:
+                exists = path.exists()
+                logger.info(f"Checking path: {path} (exists: {exists})")
+                if exists:
+                    alembic_ini_path = path
+                    break
+            
+            if alembic_ini_path:
+                logger.info(f"Found alembic.ini at: {alembic_ini_path}")
+                alembic_cfg = alembic.config.Config(str(alembic_ini_path))
+                
+                # Change to alembic.ini directory for proper path resolution
+                original_cwd = os.getcwd()
+                try:
+                    os.chdir(alembic_ini_path.parent)
+                    logger.info(f"Changed working directory to: {os.getcwd()}")
+                    
+                    command.upgrade(alembic_cfg, "head")
+                    logger.info("✓ Database migrations completed successfully on module import")
+                finally:
+                    os.chdir(original_cwd)
+            else:
+                logger.warning(f"⚠ alembic.ini not found. Tried paths: {[str(p) for p in possible_paths]}")
+                logger.warning(f"Current directory: {os.getcwd()}, __file__: {__file__}")
+        else:
+            logger.info(f"Skipping migrations (APP_ENV={settings.APP_ENV}, not production)")
+    except Exception as e:
+        import traceback
+        logger.error(f"❌ ERROR: Could not run migrations on import: {e}")
+        logger.error(traceback.format_exc())
+        # Don't raise - allow app to start even if migrations fail
+
+# Run migrations when this module is imported
+run_migrations_on_import()
+
+# Import app after migrations (app import may trigger lifespan, but we want migrations first)
 from app.main import app
 
 # Create ASGI middleware wrapper
