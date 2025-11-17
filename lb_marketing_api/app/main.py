@@ -1,6 +1,7 @@
 
 import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Depends
@@ -15,21 +16,11 @@ from .routers import businesses, locations, social_profiles, campaigns, assets, 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title=settings.APP_NAME)
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[*settings.CORS_ORIGINS] if settings.CORS_ORIGINS else ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Create tables on startup (development only)
-# In production, use Alembic migrations instead
-@app.on_event("startup")
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown."""
+    # Startup code
     logger.info("=== Application startup event triggered ===")
     logger.info(f"APP_ENV: {settings.APP_ENV}")
     logger.info(f"Current working directory: {os.getcwd()}")
@@ -79,6 +70,23 @@ async def on_startup():
             import traceback
             logger.error(f"❌ ERROR: Could not run migrations: {e}")
             logger.error(traceback.format_exc())
+    
+    yield  # Application runs here
+    
+    # Shutdown code (if needed)
+    logger.info("Application shutting down")
+
+
+app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[*settings.CORS_ORIGINS] if settings.CORS_ORIGINS else ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/healthz")
 def healthz():
