@@ -3,6 +3,8 @@
  * Uses VITE_API_URL environment variable in production, or proxy in development
  */
 
+import { getAuthToken } from './auth';
+
 const getApiUrl = (): string => {
   // In production, use the environment variable
   // In development, use relative paths (Vite proxy handles it)
@@ -34,8 +36,8 @@ export const apiFetch = async (
   const apiUrl = getApiUrl();
   const url = apiUrl ? `${apiUrl}${endpoint}` : endpoint;
   
-  // Get auth token
-  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  // Get auth token using auth utility
+  const token = getAuthToken();
   
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
@@ -151,5 +153,10 @@ export const api = {
       localStorage.removeItem('user_data');
     }
   },
+  
+  // Admin endpoints
+  runMigrations: () => apiFetch('/admin/migrate', {
+    method: 'POST',
+  }),
 };
 
