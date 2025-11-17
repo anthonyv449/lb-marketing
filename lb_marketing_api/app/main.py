@@ -4,13 +4,14 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .config import settings
 from .db import Base, engine, get_db
 from . import models
+from .auth import get_current_user
 from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth, auth
 
 # Set up logging
@@ -23,53 +24,10 @@ async def lifespan(app: FastAPI):
     # Startup code
     logger.info("=== Application startup event triggered ===")
     logger.info(f"APP_ENV: {settings.APP_ENV}")
-    logger.info(f"Current working directory: {os.getcwd()}")
     
     if settings.APP_ENV == "development":
         Base.metadata.create_all(bind=engine)
         logger.info("Development: Tables created via create_all()")
-    # Run migrations in production (Azure Functions)
-    elif settings.APP_ENV == "production":
-        try:
-            import alembic.config
-            from pathlib import Path
-            
-            # Try multiple paths for alembic.ini (Azure Functions may have different working directory)
-            possible_paths = [
-                Path("alembic.ini"),
-                Path(__file__).parent.parent.parent / "alembic.ini",
-                Path("/home/site/wwwroot/alembic.ini"),  # Azure Functions Linux
-                Path("D:/home/site/wwwroot/alembic.ini"),  # Azure Functions Windows
-            ]
-            
-            alembic_ini_path = None
-            for path in possible_paths:
-                logger.info(f"Checking path: {path} (exists: {path.exists()})")
-                if path.exists():
-                    alembic_ini_path = path
-                    break
-            
-            if alembic_ini_path:
-                logger.info(f"Found alembic.ini at: {alembic_ini_path}")
-                alembic_cfg = alembic.config.Config(str(alembic_ini_path))
-                
-                # Change to alembic.ini directory for proper path resolution
-                original_cwd = os.getcwd()
-                try:
-                    os.chdir(alembic_ini_path.parent)
-                    logger.info(f"Changed working directory to: {os.getcwd()}")
-                    
-                    from alembic import command
-                    command.upgrade(alembic_cfg, "head")
-                    logger.info("✓ Database migrations completed successfully")
-                finally:
-                    os.chdir(original_cwd)
-            else:
-                logger.warning(f"⚠ alembic.ini not found. Tried paths: {[str(p) for p in possible_paths]}")
-        except Exception as e:
-            import traceback
-            logger.error(f"❌ ERROR: Could not run migrations: {e}")
-            logger.error(traceback.format_exc())
     
     yield  # Application runs here
     
@@ -106,13 +64,21 @@ def seed(db: Session = Depends(get_db)):
     return {"ok": True}
 
 @app.post("/admin/migrate")
-def run_migrations_manual():
-    """Manual migration endpoint - use for troubleshooting when automatic migrations fail"""
+def run_migrations_manual(current_user: models.User = Depends(get_current_user)):
+    """Manual migration endpoint - requires JWT token and user id must be 1"""
+    # Check if user is authorized (must be user id 1)
+    if current_user.id != 1:
+        raise HTTPException(
+            status_code=403, 
+            detail="Unauthorized: Only user with id 1 can run migrations"
+        )
+    
     try:
         import alembic.config
         from pathlib import Path
+        from alembic import command
         
-        logger.info("Manual migration endpoint called")
+        logger.info("Manual migration endpoint called - running migrations from scratch")
         
         # Try multiple paths for alembic.ini
         possible_paths = [
@@ -131,30 +97,40 @@ def run_migrations_manual():
                 alembic_ini_path = path
                 break
         
-        if alembic_ini_path:
-            logger.info(f"Found alembic.ini at: {alembic_ini_path}")
-            alembic_cfg = alembic.config.Config(str(alembic_ini_path))
-            original_cwd = os.getcwd()
-            try:
-                os.chdir(alembic_ini_path.parent)
-                from alembic import command
-                command.upgrade(alembic_cfg, "head")
-                return {
-                    "status": "success",
-                    "message": "Migrations completed successfully",
-                    "alembic_ini_path": str(alembic_ini_path),
-                    "working_directory": os.getcwd(),
-                    "checked_paths": checked_paths
-                }
-            finally:
-                os.chdir(original_cwd)
-        else:
+        if not alembic_ini_path:
             return {
                 "status": "error",
                 "message": "alembic.ini not found",
                 "current_directory": os.getcwd(),
                 "checked_paths": checked_paths
             }
+        
+        logger.info(f"Found alembic.ini at: {alembic_ini_path}")
+        alembic_cfg = alembic.config.Config(str(alembic_ini_path))
+        original_cwd = os.getcwd()
+        
+        try:
+            os.chdir(alembic_ini_path.parent)
+            logger.info(f"Changed working directory to: {os.getcwd()}")
+            
+            # Run migrations from scratch: downgrade to base then upgrade to head
+            logger.info("Downgrading to base (removing all migrations)...")
+            command.downgrade(alembic_cfg, "base")
+            
+            logger.info("Upgrading to head (applying all migrations from scratch)...")
+            command.upgrade(alembic_cfg, "head")
+            
+            logger.info("✓ Database migrations completed successfully from scratch")
+            
+            return {
+                "status": "success",
+                "message": "Migrations completed successfully from scratch",
+                "alembic_ini_path": str(alembic_ini_path),
+                "working_directory": os.getcwd(),
+                "checked_paths": checked_paths
+            }
+        finally:
+            os.chdir(original_cwd)
     except Exception as e:
         import traceback
         error_traceback = traceback.format_exc()
