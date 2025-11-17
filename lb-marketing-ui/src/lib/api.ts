@@ -10,7 +10,12 @@ const getApiUrl = (): string => {
   
   if (apiUrl) {
     // Remove trailing slash if present
-    return apiUrl.replace(/\/$/, '');
+    let baseUrl = apiUrl.replace(/\/$/, '');
+    // Ensure /api is included in the base URL for Azure Functions
+    if (!baseUrl.endsWith('/api')) {
+      baseUrl = baseUrl.endsWith('/') ? `${baseUrl}api` : `${baseUrl}/api`;
+    }
+    return baseUrl;
   }
   
   // In development, return empty string to use relative paths (proxy)
