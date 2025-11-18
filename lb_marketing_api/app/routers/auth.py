@@ -64,7 +64,8 @@ def login(
         )
     
     # Create access token
-    access_token = create_access_token(data={"sub": user.id})
+    # JWT 'sub' (subject) must be a string, so convert user.id to string
+    access_token = create_access_token(data={"sub": str(user.id)})
     
     return {
         "access_token": access_token,
