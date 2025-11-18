@@ -153,7 +153,7 @@ def x_callback(
     # Get existing business for user (optional - business_id can be None)
     # Only use existing business, don't create one if it doesn't exist
     business = db.query(models.Business).filter(models.Business.user_id == user.id).first()
-    business_id = business.id if business else None
+    business_id = None
     
     if not settings.TWITTER_CLIENT_ID or not settings.TWITTER_CLIENT_SECRET:
         frontend_url = settings.FRONTEND_URL.rstrip('/')
