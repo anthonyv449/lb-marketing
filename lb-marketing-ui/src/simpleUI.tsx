@@ -15,11 +15,8 @@ import { Label } from "./components/ui/Label";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/Tabs";
 import {
-  Instagram,
   Twitter,
-  Facebook,
-  Linkedin,
-  Youtube,
+  Music,
   CheckCircle2,
 } from "lucide-react";
 import { api } from "./lib/api";
@@ -82,10 +79,7 @@ export default function SimpleMarketingDashboard() {
 
   const platformOptions = [
     { label: "Twitter", value: "twitter", icon: Twitter },
-    { label: "Facebook", value: "facebook", icon: Facebook },
-    { label: "Instagram", value: "instagram", icon: Instagram },
-    { label: "LinkedIn", value: "linkedin", icon: Linkedin },
-    { label: "YouTube", value: "youtube", icon: Youtube },
+    { label: "TikTok", value: "tiktok", icon: Music },
   ];
 
   const isPlatformConnected = (platform: string): boolean => {
@@ -154,10 +148,24 @@ export default function SimpleMarketingDashboard() {
     const urlParams = new URLSearchParams(window.location.search);
     const oauthParam = urlParams.get("oauth");
     if (oauthParam === "success") {
+      const platform = urlParams.get("platform");
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
       // Check connection status again
-      setTimeout(() => checkAllPlatformConnections(), 1000);
+      setTimeout(() => {
+        checkAllPlatformConnections();
+        if (platform) {
+          const platformName = platform === "x" ? "Twitter/X" : platform.charAt(0).toUpperCase() + platform.slice(1);
+          alert(`Successfully connected to ${platformName}!`);
+        }
+      }, 1000);
+    } else if (oauthParam === "error") {
+      const errorMessage = urlParams.get("error") || "An error occurred during OAuth authorization";
+      // Clear the URL parameter
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Show error message
+      alert(`OAuth Error: ${errorMessage}`);
+      setError(errorMessage);
     }
   }, [user]);
 
@@ -207,9 +215,14 @@ export default function SimpleMarketingDashboard() {
     return platformConnections[platform]?.handle ?? null;
   };
 
-  const handlePlatformConnect = (platform: string) => {
+  const handlePlatformConnect = async (platform: string) => {
     const backendPlatform = mapUiToBackendPlatform(platform);
-    api.authorizePlatform(backendPlatform);
+    try {
+      await api.authorizePlatform(backendPlatform);
+    } catch (error) {
+      console.error('Failed to authorize platform:', error);
+      setError(error instanceof Error ? error.message : 'Failed to connect platform');
+    }
   };
 
   const handlePlatformDisconnect = async (platform: string) => {

@@ -45,7 +45,13 @@ export const apiFetch = async (
   
   // Add authorization header if token exists
   if (token) {
-    defaultHeaders['Authorization'] = `Bearer ${token}`;
+    defaultHeaders['Authorization'] = `Bearer ${token.toString()}`;
+    // Debug logging (remove in production)
+    if (endpoint.includes('/oauth')) {
+      console.log('DEBUG: apiFetch - Adding Authorization header for', endpoint);
+    }
+  } else {
+    console.warn('DEBUG: apiFetch - No token found for request to', endpoint);
   }
   
   const config: RequestInit = {
@@ -55,7 +61,7 @@ export const apiFetch = async (
       ...options.headers,
     },
   };
-  
+  console.log({url, config});
   return fetch(url, config);
 };
 
@@ -85,12 +91,27 @@ export const api = {
   checkXStatus: () => 
     apiFetch('/oauth/x/status'),
   
-  authorizeX: () => {
-    const apiUrl = getApiUrl();
-    const url = apiUrl 
-      ? `${apiUrl}/oauth/x/authorize`
-      : `/oauth/x/authorize`;
-    window.location.href = url;
+  authorizeX: async () => {
+    // Fetch the authorization URL with authentication
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Not authenticated. Please log in first.');
+    }
+    
+    console.log('DEBUG: Attempting to authorize X, token exists:', !!token);
+    const response = await apiFetch('/oauth/x/authorize?return_url=true');
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('DEBUG: Authorization failed:', response.status, errorText);
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      }
+      throw new Error(`Failed to get authorization URL: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    window.location.href = data.authorization_url;
   },
   
   // Get all platform connection statuses
@@ -102,12 +123,15 @@ export const api = {
     apiFetch(`/oauth/${platform}/status`),
   
   // Authorize a platform
-  authorizePlatform: (platform: string) => {
-    const apiUrl = getApiUrl();
-    const url = apiUrl 
-      ? `${apiUrl}/oauth/${platform}/authorize`
-      : `/oauth/${platform}/authorize`;
-    window.location.href = url;
+  authorizePlatform: async (platform: string) => {
+
+    // Fetch the authorization URL with authentication
+    const response = await apiFetch(`/oauth/${platform}/authorize?return_url=true`);
+    if (!response.ok) {
+      throw new Error('Failed to get authorization URL');
+    }
+    const data = await response.json();
+    window.location.href = data.authorization_url;
   },
   
   // Disconnect a platform
