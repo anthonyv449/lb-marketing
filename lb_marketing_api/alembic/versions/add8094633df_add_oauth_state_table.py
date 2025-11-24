@@ -22,7 +22,7 @@ def upgrade() -> None:
     # Create oauth_states table (if it doesn't exist)
     if not op.get_bind().dialect.has_table(op.get_bind(), 'oauth_states'):
         op.create_table('oauth_states',
-            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('id', sa.Integer(), nullable=False, autoincrement=True),
             sa.Column('state', sa.String(length=255), nullable=False),
             sa.Column('user_id', sa.Integer(), nullable=False),
             sa.Column('code_verifier', sa.String(length=255), nullable=True),
