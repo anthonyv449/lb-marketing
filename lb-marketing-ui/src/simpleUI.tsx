@@ -72,6 +72,19 @@ export default function SimpleMarketingDashboard() {
     }
   };
 
+  // Helper function to format current date/time for datetime-local input (local time)
+  const getCurrentLocalDateTime = (): string => {
+    const now = new Date();
+    // Get local date/time components
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    // Format as YYYY-MM-DDTHH:mm (required by datetime-local)
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   // Map UI platform values to backend platform values
   const mapUiToBackendPlatform = (uiPlatform: string): string => {
     if (uiPlatform === "twitter") return "x";
@@ -541,7 +554,7 @@ export default function SimpleMarketingDashboard() {
                   type="datetime-local"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  min={new Date().toISOString().slice(0, 16)}
+                  min={getCurrentLocalDateTime()}
                 />
               </div>
             )}
