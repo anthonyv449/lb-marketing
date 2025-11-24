@@ -1,0 +1,296 @@
+### LB Marketing API - HTTP Requests
+### Use this file with REST Client extension in VS Code
+### Variables - Update these as needed
+@baseUrl = http://localhost:8000
+@token = your-jwt-token-here
+
+###############################################
+# Health & Utility Endpoints
+###############################################
+
+### Health Check
+GET {{baseUrl}}/healthz
+
+### Seed Database (creates sample data)
+POST {{baseUrl}}/seed
+
+### Run Migrations (requires auth, user id must be 1)
+POST {{baseUrl}}/admin/migrate
+Authorization: Bearer {{token}}
+
+###############################################
+# Authentication Endpoints
+###############################################
+
+### Register New User
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "full_name": "John Doe"
+}
+
+### Login (Get Access Token)
+POST {{baseUrl}}/auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=user@example.com&password=securepassword123
+
+### Get Current User Info
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###############################################
+# Business Endpoints
+###############################################
+
+### List All Businesses
+GET {{baseUrl}}/businesses
+
+### Get Business by ID
+GET {{baseUrl}}/businesses/1
+
+### Create Business
+POST {{baseUrl}}/businesses
+Content-Type: application/json
+
+{
+  "name": "ACME Coffee Shop",
+  "email": "hello@acme.com",
+  "phone": "+1-555-0123",
+  "website": "https://acme.com"
+}
+
+###############################################
+# Location Endpoints
+###############################################
+
+### List All Locations
+GET {{baseUrl}}/locations
+
+### Create Location
+POST {{baseUrl}}/locations
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "name": "Main Street Location",
+  "address_line1": "123 Main St",
+  "city": "Los Angeles",
+  "state": "CA",
+  "postal_code": "90001",
+  "country": "USA",
+  "timezone": "America/Los_Angeles"
+}
+
+###############################################
+# Social Profile Endpoints
+###############################################
+
+### List All Social Profiles
+GET {{baseUrl}}/social-profiles
+
+### Create Social Profile
+POST {{baseUrl}}/social-profiles
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "business_id": 1,
+  "platform": "x",
+  "handle": "@acmecoffee",
+  "external_id": "123456789",
+  "access_token": "optional-token"
+}
+
+###############################################
+# Campaign Endpoints
+###############################################
+
+### List All Campaigns
+GET {{baseUrl}}/campaigns
+
+### Create Campaign
+POST {{baseUrl}}/campaigns
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "name": "Summer Promotion 2024",
+  "goal": "Increase engagement by 50%",
+  "start_date": "2024-06-01T00:00:00Z",
+  "end_date": "2024-08-31T23:59:59Z"
+}
+
+###############################################
+# Media Asset Endpoints
+###############################################
+
+### List All Media Assets
+GET {{baseUrl}}/assets
+
+### Create Media Asset
+POST {{baseUrl}}/assets
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "title": "Coffee Shop Interior",
+  "storage_url": "https://example.com/images/coffee-shop.jpg",
+  "mime_type": "image/jpeg"
+}
+
+###############################################
+# Scheduled Post Endpoints
+###############################################
+
+### List All Scheduled Posts
+GET {{baseUrl}}/posts
+
+### Get Post by ID
+GET {{baseUrl}}/posts/1
+
+### Create Scheduled Post
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "platform": "x",
+  "content": "Check out our new summer menu! ☀️☕ #Coffee #Summer",
+  "scheduled_at": "2024-06-15T10:00:00Z",
+  "campaign_id": 1,
+  "media_asset_id": 1
+}
+
+### Publish All Due Posts
+POST {{baseUrl}}/posts/publish
+
+### Publish Specific Post
+POST {{baseUrl}}/posts/1/publish
+
+###############################################
+# OAuth Endpoints
+###############################################
+
+### Get X Authorization URL (returns JSON)
+GET {{baseUrl}}/oauth/x/authorize?return_url=true
+Authorization: Bearer {{token}}
+
+### X OAuth Callback (handled by browser redirect)
+# GET {{baseUrl}}/oauth/x/callback?code=xxx&state=xxx
+
+### Check X Connection Status
+GET {{baseUrl}}/oauth/x/status
+Authorization: Bearer {{token}}
+
+### Get TikTok Authorization URL (returns JSON)
+GET {{baseUrl}}/oauth/tiktok/authorize?return_url=true
+Authorization: Bearer {{token}}
+
+### TikTok OAuth Callback (handled by browser redirect)
+# GET {{baseUrl}}/oauth/tiktok/callback?code=xxx&state=xxx
+
+### Check TikTok Connection Status
+GET {{baseUrl}}/oauth/tiktok/status
+Authorization: Bearer {{token}}
+
+### Get All Platform Status
+GET {{baseUrl}}/oauth/status
+Authorization: Bearer {{token}}
+
+### Disconnect Platform
+POST {{baseUrl}}/oauth/x/disconnect
+Authorization: Bearer {{token}}
+
+### Generic Platform Authorize (supports 'x' and 'tiktok')
+GET {{baseUrl}}/oauth/x/authorize?return_url=true
+Authorization: Bearer {{token}}
+
+### Generic Platform Status
+GET {{baseUrl}}/oauth/x/status
+Authorization: Bearer {{token}}
+
+###############################################
+# Example Workflow: Complete Flow
+###############################################
+
+### Step 1: Register a new user
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "testpassword123",
+  "full_name": "Test User"
+}
+
+### Step 2: Login to get token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=test@example.com&password=testpassword123
+
+### Step 3: Use the token from login response
+# Copy the access_token from the login response and update @token variable above
+# Then use it in subsequent requests
+
+### Step 4: Create a business
+POST {{baseUrl}}/businesses
+Content-Type: application/json
+
+{
+  "name": "My Test Business",
+  "email": "business@example.com"
+}
+
+### Step 5: Create a location for the business
+POST {{baseUrl}}/locations
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "name": "Downtown Location",
+  "city": "San Francisco",
+  "state": "CA",
+  "timezone": "America/Los_Angeles"
+}
+
+### Step 6: Create a campaign
+POST {{baseUrl}}/campaigns
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "name": "Q4 Marketing Campaign",
+  "goal": "Increase brand awareness"
+}
+
+### Step 7: Create a media asset
+POST {{baseUrl}}/assets
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "title": "Product Photo",
+  "storage_url": "https://example.com/product.jpg",
+  "mime_type": "image/jpeg"
+}
+
+### Step 8: Schedule a post
+POST {{baseUrl}}/posts
+Content-Type: application/json
+
+{
+  "business_id": 1,
+  "platform": "x",
+  "content": "Excited to announce our new product! 🎉",
+  "scheduled_at": "2024-12-25T12:00:00Z",
+  "campaign_id": 1,
+  "media_asset_id": 1
+}
+

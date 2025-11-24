@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 import requests
 import secrets
 import hashlib
@@ -14,10 +15,6 @@ from ..config import settings
 from ..auth import get_current_user
 
 router = APIRouter(prefix="/oauth", tags=["oauth"])
-
-# In-memory storage for OAuth state (in production, use Redis or similar)
-# Format: {state: {"user_id": int, "business_id": int, "code_verifier": str}}
-oauth_states = {}
 
 def generate_pkce_pair():
     """
@@ -57,19 +54,22 @@ def _build_x_authorization_url(current_user: models.User, db: Session) -> str:
     if not settings.TWITTER_CLIENT_ID or not settings.TWITTER_CLIENT_SECRET:
         raise HTTPException(500, "Twitter OAuth credentials not configured")
     
-    # Get or create business for user
-   
-    
     # Generate PKCE pair
     code_verifier, code_challenge = generate_pkce_pair()
     
     # Generate state for CSRF protection
     state = secrets.token_urlsafe(32)
-    oauth_states[state] = {
-        "user_id": current_user.id,
-        
-        "code_verifier": code_verifier
-    }
+    
+    # Store state in database with 10 minute expiration
+    oauth_state = models.OAuthState(
+        state=state,
+        user_id=current_user.id,
+        code_verifier=code_verifier,
+        platform="x",
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.add(oauth_state)
+    db.commit()
     
     # Build authorization URL
     auth_params = {
@@ -128,20 +128,38 @@ def x_callback(
         error_encoded = urlencode({'error': 'Missing authorization code or state parameter'})
         return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
     
-    # Verify state
-    if state not in oauth_states:
+    # Verify state from database
+    oauth_state = db.query(models.OAuthState).filter(
+        models.OAuthState.state == state,
+        models.OAuthState.platform == "x"
+    ).first()
+    
+    if not oauth_state:
         frontend_url = settings.FRONTEND_URL.rstrip('/')
         error_encoded = urlencode({'error': 'Invalid state parameter'})
         return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
     
-    state_data = oauth_states.pop(state)
-    user_id = state_data["user_id"]
-    code_verifier = state_data.get("code_verifier")
+    # Check if state has expired
+    if oauth_state.expires_at < datetime.utcnow():
+        db.delete(oauth_state)
+        db.commit()
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'OAuth state has expired. Please try again.'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    user_id = oauth_state.user_id
+    code_verifier = oauth_state.code_verifier
     
     if not code_verifier:
+        db.delete(oauth_state)
+        db.commit()
         frontend_url = settings.FRONTEND_URL.rstrip('/')
         error_encoded = urlencode({'error': 'Missing code_verifier in state'})
         return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    # Delete state after use (one-time use)
+    db.delete(oauth_state)
+    db.commit()
     
     # Get user and business (optional)
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -297,7 +315,18 @@ def authorize_tiktok(
     
     # Generate state for CSRF protection
     state = secrets.token_urlsafe(32)
-    oauth_states[state] = {"user_id": current_user.id, "business_id": business.id}
+    
+    # Store state in database with 10 minute expiration
+    oauth_state = models.OAuthState(
+        state=state,
+        user_id=current_user.id,
+        code_verifier=None,  # TikTok doesn't use PKCE
+        platform="tiktok",
+        business_id=business.id,
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.add(oauth_state)
+    db.commit()
     
     # Build authorization URL
     # TikTok OAuth 2.0 uses similar flow to Twitter
@@ -341,15 +370,31 @@ def tiktok_callback(
         error_encoded = urlencode({'error': 'Missing authorization code or state parameter'})
         return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
     
-    # Verify state
-    if state not in oauth_states:
+    # Verify state from database
+    oauth_state = db.query(models.OAuthState).filter(
+        models.OAuthState.state == state,
+        models.OAuthState.platform == "tiktok"
+    ).first()
+    
+    if not oauth_state:
         frontend_url = settings.FRONTEND_URL.rstrip('/')
         error_encoded = urlencode({'error': 'Invalid state parameter'})
         return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
     
-    state_data = oauth_states.pop(state)
-    user_id = state_data["user_id"]
-    business_id = state_data["business_id"]
+    # Check if state has expired
+    if oauth_state.expires_at < datetime.utcnow():
+        db.delete(oauth_state)
+        db.commit()
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'OAuth state has expired. Please try again.'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    user_id = oauth_state.user_id
+    business_id = oauth_state.business_id
+    
+    # Delete state after use (one-time use)
+    db.delete(oauth_state)
+    db.commit()
     
     if not settings.TIKTOK_CLIENT_ID or not settings.TIKTOK_CLIENT_SECRET:
         raise HTTPException(500, "TikTok OAuth credentials not configured")

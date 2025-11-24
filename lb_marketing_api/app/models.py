@@ -39,10 +39,6 @@ class User(Base):
     businesses = relationship("Business", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password: str):
-        """Hash and set the user's password."""
-        print("SET_PASSWORD DEBUG >>>", repr(password))
-        print("chars:", len(password))
-        print("bytes:", len(password.encode("utf-8")))
         self.password_hash = pwd_context.hash(password)
 
     def check_password(self, password: str) -> bool:
@@ -144,3 +140,15 @@ class ScheduledPost(Base):
     business = relationship("Business", back_populates="posts")
     campaign = relationship("Campaign", back_populates="posts")
     media_asset = relationship("MediaAsset", back_populates="posts")
+
+class OAuthState(Base):
+    __tablename__ = "oauth_states"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    state: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    code_verifier: Mapped[str | None] = mapped_column(String(255))  # Required for PKCE (X/Twitter), optional for others
+    platform: Mapped[str] = mapped_column(String(50), nullable=False)  # 'x', 'tiktok', etc.
+    business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)  # Expiration time (e.g., 10 minutes)
