@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardContent } from "./components/ui/card";
 import { Input } from "./components/ui/input";
 import { Textarea } from "./components/ui/textarea";
@@ -23,11 +23,17 @@ export default function SimpleMarketingDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   interface Post {
+    id: number;
+    user_id: number;
     platform: string;
-    tone: string;
-    mediaUrl: string;
     content: string;
-    schedule: boolean;
+    scheduled_at: string;
+    status: "scheduled" | "posted" | "failed" | "canceled";
+    created_at: string;
+    business_id?: number | null;
+    campaign_id?: number | null;
+    media_asset_id?: number | null;
+    external_post_id?: string | null;
   }
   const [platform, setPlatform] = useState<string>("twitter");
   const [tone, setTone] = useState<string>("professional");
@@ -37,6 +43,7 @@ export default function SimpleMarketingDashboard() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingPosts, setLoadingPosts] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [platformConnections, setPlatformConnections] = useState<
     Record<string, { connected: boolean; handle: string | null }>
@@ -86,7 +93,7 @@ export default function SimpleMarketingDashboard() {
     return platformConnections[platform]?.connected ?? false;
   };
 
-  const checkAllPlatformConnections = async () => {
+  const checkAllPlatformConnections = useCallback(async () => {
     if (!user) return; // Only check if user is authenticated
     setCheckingConnection(true);
     try {
@@ -113,7 +120,7 @@ export default function SimpleMarketingDashboard() {
     } finally {
       setCheckingConnection(false);
     }
-  };
+  }, [user]);
 
   // Check authentication on mount
   useEffect(() => {
@@ -144,11 +151,31 @@ export default function SimpleMarketingDashboard() {
     checkAuth();
   }, []);
 
+  // Fetch posts for the current user
+  const fetchPosts = useCallback(async () => {
+    if (!user) return;
+    setLoadingPosts(true);
+    try {
+      const res = await api.listPosts();
+      if (res.ok) {
+        const data = await res.json();
+        setPosts(data);
+      } else {
+        console.error("Failed to fetch posts:", res.status);
+      }
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  }, [user]);
+
   // Check all platform connection statuses on mount and when user changes
   useEffect(() => {
     if (!user) return; // Only check if user is authenticated
 
     checkAllPlatformConnections();
+    fetchPosts();
 
     // Handle OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -178,7 +205,7 @@ export default function SimpleMarketingDashboard() {
       alert(`OAuth Error: ${errorMessage}`);
       setError(errorMessage);
     }
-  }, [user]);
+  }, [user, checkAllPlatformConnections, fetchPosts]);
 
   // Update platform selection if current platform becomes disconnected
   useEffect(() => {
@@ -192,6 +219,7 @@ export default function SimpleMarketingDashboard() {
         setPlatform(firstConnected.value);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platformConnections, checkingConnection, platform, user]);
 
   const handleLoginSuccess = (loggedInUser: User) => {
@@ -278,8 +306,8 @@ export default function SimpleMarketingDashboard() {
       const published = await res.json();
       alert(`Successfully published ${published.length} post(s)!`);
 
-      // Optionally refresh posts list
-      // You might want to fetch posts from the API here
+      // Refresh posts list to show updated status
+      await fetchPosts();
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to publish posts";
@@ -321,18 +349,8 @@ export default function SimpleMarketingDashboard() {
         throw new Error(text || `HTTP ${res.status}`);
       }
 
-      const saved = await res.json();
-
-      // saved should conform to ScheduledPostOut. Map to local Post shape for display.
-      const displayPost: Post = {
-        platform: mapBackendToUiPlatform(saved.platform),
-        tone,
-        mediaUrl: mediaUrl.trim(),
-        content: saved.content ?? content.trim(),
-        schedule: !!saved.scheduled_at,
-      };
-
-      setPosts([displayPost, ...posts]);
+      // Refresh posts list to get the latest data from the server
+      await fetchPosts();
 
       // reset form
       setContent("");
@@ -545,46 +563,72 @@ export default function SimpleMarketingDashboard() {
         </TabsContent>
         {/* Posts tab */}
         <TabsContent value="posts">
-          {posts.length === 0 ? (
+          {loadingPosts ? (
+            <p className="text-sm text-muted-foreground">Loading posts...</p>
+          ) : posts.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No posts yet. Create one in the Compose tab.
             </p>
           ) : (
             <ScrollArea className="h-96 pr-4">
               <div className="flex flex-col gap-4">
-                {posts.map((post, idx) => (
-                  <Card key={idx} className="shadow-sm border">
-                    <CardHeader className="flex flex-row items-center gap-2">
-                      {getPlatformIcon(post.platform)}
-                      <div className="flex flex-col">
-                        <span className="font-medium capitalize">
-                          {post.platform}
-                        </span>
-                        <span className="text-xs capitalize text-muted-foreground">
-                          Tone: {post.tone}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm mb-2 whitespace-pre-line">
-                        {post.content}
-                      </p>
-                      {post.mediaUrl && (
-                        <a
-                          href={post.mediaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-500 underline"
-                        >
-                          View media
-                        </a>
-                      )}
-                      <p className="text-xs mt-2 text-muted-foreground">
-                        {post.schedule ? "Scheduled" : "Not scheduled"}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {posts.map((post) => {
+                  const isPosted = post.status === "posted";
+                  const scheduledDate = new Date(post.scheduled_at);
+                  const formattedDate = scheduledDate.toLocaleString();
+
+                  return (
+                    <Card key={post.id} className="shadow-sm border">
+                      <CardHeader className="flex flex-row items-center gap-2">
+                        {getPlatformIcon(post.platform)}
+                        <div className="flex flex-col flex-1">
+                          <span className="font-medium capitalize">
+                            {mapBackendToUiPlatform(post.platform)}
+                          </span>
+                          <span className="text-xs capitalize text-muted-foreground">
+                            Status: {post.status}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          {isPosted ? (
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-green-600">
+                                Posted
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formattedDate}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium text-blue-600">
+                                Scheduled
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formattedDate}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <p className="text-sm mb-2 whitespace-pre-line">
+                          {post.content}
+                        </p>
+                        {post.media_asset_id && (
+                          <p className="text-xs text-muted-foreground">
+                            Media attached (ID: {post.media_asset_id})
+                          </p>
+                        )}
+                        {post.external_post_id && (
+                          <p className="text-xs text-muted-foreground">
+                            External ID: {post.external_post_id}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </ScrollArea>
           )}

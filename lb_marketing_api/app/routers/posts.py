@@ -5,6 +5,7 @@ from typing import List
 
 from ..db import get_db
 from .. import models, schemas
+from ..auth import get_current_user
 from ..services.platform_poster import post_scheduled_post, PlatformPostError
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -26,8 +27,13 @@ def schedule_post(payload: schemas.ScheduledPostCreate, db: Session = Depends(ge
     return obj
 
 @router.get("", response_model=List[schemas.ScheduledPostOut])
-def list_posts(db: Session = Depends(get_db)):
-    return db.query(models.ScheduledPost).order_by(models.ScheduledPost.scheduled_at.desc()).all()
+def list_posts(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return db.query(models.ScheduledPost).filter(
+        models.ScheduledPost.user_id == current_user.id
+    ).order_by(models.ScheduledPost.scheduled_at.desc()).all()
 
 @router.get("/{post_id}", response_model=schemas.ScheduledPostOut)
 def get_post(post_id: int, db: Session = Depends(get_db)):
