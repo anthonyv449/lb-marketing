@@ -278,14 +278,30 @@ def x_status(
 ):
     """
     Check if X (Twitter) is connected for the current user.
+    Validates the token and disconnects if invalid.
     Returns connection status and handle if connected.
     """
+    from ..services.platform_poster import validate_x_token
+    
     profile = db.query(models.SocialProfile).filter(
         models.SocialProfile.user_id == current_user.id,
         models.SocialProfile.platform == models.PlatformEnum.x
     ).first()
     
     if profile and profile.status == "connected" and profile.access_token:
+        # Validate the token
+        is_valid, error_msg = validate_x_token(profile.access_token)
+        
+        if not is_valid:
+            # Token is invalid, disconnect the user
+            profile.status = "disconnected"
+            profile.access_token = None
+            db.commit()
+            return {
+                "connected": False,
+                "handle": None
+            }
+        
         return {
             "connected": True,
             "handle": profile.handle
@@ -514,8 +530,11 @@ def get_all_platform_status(
 ):
     """
     Get connection status for all platforms for the current user.
+    Validates X tokens and disconnects if invalid.
     Returns a dictionary mapping platform names to their connection status.
     """
+    from ..services.platform_poster import validate_x_token
+    
     profiles = db.query(models.SocialProfile).filter(
         models.SocialProfile.user_id == current_user.id,
         models.SocialProfile.status == "connected"
@@ -532,6 +551,17 @@ def get_all_platform_status(
     # Update with actual connected profiles
     for profile in profiles:
         if profile.access_token:
+            # For X platform, validate the token
+            if profile.platform == models.PlatformEnum.x:
+                is_valid, error_msg = validate_x_token(profile.access_token)
+                
+                if not is_valid:
+                    # Token is invalid, disconnect the user
+                    profile.status = "disconnected"
+                    profile.access_token = None
+                    db.commit()
+                    continue  # Skip adding this profile to status_map
+            
             status_map[profile.platform.value] = {
                 "connected": True,
                 "handle": profile.handle
@@ -598,7 +628,10 @@ def platform_status(
 ):
     """
     Check connection status for a specific platform for the current user.
+    For X platform, validates the token and disconnects if invalid.
     """
+    from ..services.platform_poster import validate_x_token
+    
     try:
         platform_enum = models.PlatformEnum(platform)
     except ValueError as e:
@@ -611,6 +644,20 @@ def platform_status(
     ).first()
     
     if profile and profile.status == "connected" and profile.access_token:
+        # For X platform, validate the token
+        if platform_enum == models.PlatformEnum.x:
+            is_valid, error_msg = validate_x_token(profile.access_token)
+            
+            if not is_valid:
+                # Token is invalid, disconnect the user
+                profile.status = "disconnected"
+                profile.access_token = None
+                db.commit()
+                return {
+                    "connected": False,
+                    "handle": None
+                }
+        
         return {
             "connected": True,
             "handle": profile.handle
