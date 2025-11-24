@@ -1,8 +1,23 @@
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
+
+def serialize_datetime_utc(dt: datetime) -> str:
+    """Serialize datetime to ISO format with UTC timezone indicator ('Z' suffix)."""
+    # If datetime is naive (no timezone), assume it's UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    else:
+        # Convert to UTC if it has timezone info
+        dt = dt.astimezone(timezone.utc)
+    # Return ISO format, ensuring it ends with 'Z' for UTC
+    iso_str = dt.isoformat()
+    # Replace '+00:00' with 'Z' for UTC timezone
+    if iso_str.endswith('+00:00'):
+        return iso_str[:-6] + 'Z'
+    return iso_str
 
 class PlatformEnum(str, Enum):
     facebook = "facebook"
@@ -31,6 +46,11 @@ class BusinessOut(BaseModel):
     phone: Optional[str] = None
     website: Optional[str] = None
     created_at: datetime
+    
+    @field_serializer('created_at')
+    def serialize_created_at(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+    
     class Config:
         from_attributes = True
 
@@ -76,6 +96,11 @@ class SocialProfileOut(BaseModel):
     external_id: Optional[str] = None
     status: str
     created_at: datetime
+    
+    @field_serializer('created_at')
+    def serialize_created_at(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+    
     class Config:
         from_attributes = True
 
@@ -94,6 +119,13 @@ class CampaignOut(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: str
+    
+    @field_serializer('start_date', 'end_date')
+    def serialize_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        if dt is None:
+            return None
+        return serialize_datetime_utc(dt)
+    
     class Config:
         from_attributes = True
 
@@ -110,6 +142,11 @@ class MediaAssetOut(BaseModel):
     storage_url: str
     mime_type: Optional[str] = None
     created_at: datetime
+    
+    @field_serializer('created_at')
+    def serialize_created_at(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+    
     class Config:
         from_attributes = True
 
@@ -134,6 +171,11 @@ class ScheduledPostOut(BaseModel):
     status: PostStatus
     external_post_id: Optional[str] = None
     created_at: datetime
+    
+    @field_serializer('scheduled_at', 'created_at')
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+    
     class Config:
         from_attributes = True
 
@@ -148,6 +190,11 @@ class UserOut(BaseModel):
     full_name: Optional[str] = None
     created_at: datetime
     is_active: bool
+    
+    @field_serializer('created_at')
+    def serialize_created_at(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+    
     class Config:
         from_attributes = True
 
