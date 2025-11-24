@@ -3,9 +3,15 @@ Azure Functions entry point for FastAPI application.
 This file wraps the FastAPI app from app.main to work with Azure Functions.
 """
 
+import logging
 import azure.functions as func
 from azure.functions import AsgiMiddleware
 from app.main import app
+from app.db import SessionLocal
+from app.routers.posts import process_due_posts
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Create ASGI middleware wrapper
 asgi_handler = AsgiMiddleware(app)
@@ -52,5 +58,25 @@ async def http_app_func(req: func.HttpRequest) -> func.HttpResponse:
     # Wrap the request to strip /api prefix from URL before passing to FastAPI
     modified_req = HttpRequestWrapper(req)
     return await asgi_handler.handle_async(modified_req)
+
+@function_app.timer_trigger(schedule="0 * * * * *", arg_name="timer", run_on_startup=False, use_monitor=False)
+def publish_scheduled_posts_timer(timer: func.TimerRequest) -> None:
+    """
+    Timer-triggered function that runs every minute to publish scheduled posts.
+    Schedule: "0 * * * * *" means run at the start of every minute (second 0 of every minute).
+    """
+    logger.info("Timer trigger fired: Starting scheduled posts publish process")
+    
+    db = SessionLocal()
+    try:
+        published_posts = process_due_posts(db)
+        if published_posts:
+            logger.info(f"Successfully published {len(published_posts)} scheduled post(s)")
+        else:
+            logger.info("No scheduled posts were due for publishing")
+    except Exception as e:
+        logger.error(f"Error in publish_scheduled_posts_timer: {str(e)}", exc_info=True)
+    finally:
+        db.close()
 
 
