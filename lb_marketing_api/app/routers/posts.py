@@ -85,4 +85,4 @@ def publish_post(post_id: int, db: Session = Depends(get_db)):
         return updated_post
     except PlatformPostError as e:
         error_msg = str(e)
-        raise HTTPException(status_code=400, detail=error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)

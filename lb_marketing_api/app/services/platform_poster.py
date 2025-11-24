@@ -58,6 +58,12 @@ def post_to_x(
         
         result = response.json()
         
+        # Check for errors in the response body (Twitter API can return errors even with 200 status)
+        if "errors" in result:
+            error_details = result.get("errors", [])
+            error_messages = [str(err) for err in error_details]
+            raise PlatformPostError(f"Twitter API returned errors: {', '.join(error_messages)}")
+        
         # Extract the tweet ID from the response
         if "data" in result and "id" in result["data"]:
             return {
