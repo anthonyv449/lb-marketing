@@ -587,8 +587,21 @@ export default function SimpleMarketingDashboard() {
               <div className="flex flex-col gap-4">
                 {posts.map((post) => {
                   const isPosted = post.status === "posted";
+                  // Parse the UTC date string and convert to local time
                   const scheduledDate = new Date(post.scheduled_at);
-                  const formattedDate = scheduledDate.toLocaleString();
+                  // Format in local time with date and time, including timezone info
+                  const formattedDate = scheduledDate.toLocaleString(
+                    undefined,
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                      timeZoneName: "short",
+                    }
+                  );
 
                   return (
                     <Card key={post.id} className="shadow-sm border">
