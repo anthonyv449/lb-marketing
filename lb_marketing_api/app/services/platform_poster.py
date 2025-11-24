@@ -4,7 +4,7 @@ Handles posting scheduled posts to social media platforms via their APIs.
 """
 
 import requests
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 from sqlalchemy.orm import Session
 
 from .. import models
@@ -15,11 +15,64 @@ class PlatformPostError(Exception):
     pass
 
 
+def validate_x_token(access_token: str) -> Tuple[bool, Optional[str]]:
+    """
+    Validate X (Twitter) access token by making a test API call.
+    
+    Args:
+        access_token: OAuth 2.0 Bearer token for Twitter API
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+        - is_valid: True if token is valid, False otherwise
+        - error_message: Error message if token is invalid, None if valid
+    """
+    try:
+        # Use Twitter API v2 endpoint to get user info (lightweight validation)
+        url = "https://api.twitter.com/2/users/me"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        # Token is valid if we get a 200 response
+        if response.status_code == 200:
+            return True, None
+        
+        # Token is invalid if we get 401 (Unauthorized)
+        if response.status_code == 401:
+            try:
+                error_data = response.json()
+                error_msg = "Invalid or expired access token"
+                if "errors" in error_data:
+                    error_messages = [err.get("message", str(err)) for err in error_data["errors"]]
+                    error_msg = ", ".join(error_messages)
+                return False, error_msg
+            except Exception:
+                return False, "Invalid or expired access token"
+        
+        # Other status codes might indicate temporary issues
+        # For now, we'll consider them as potentially valid to avoid false disconnections
+        # But log the issue
+        return True, None
+        
+    except requests.exceptions.RequestException as e:
+        # Network errors shouldn't cause disconnection
+        # Return True but with a warning message
+        return True, f"Unable to validate token due to network error: {str(e)}"
+    except Exception as e:
+        # Unexpected errors shouldn't cause disconnection
+        return True, f"Unable to validate token: {str(e)}"
+
+
 def post_to_x(
     content: str,
     access_token: str,
     media_urls: Optional[List[str]] = None,
-    social_profile: Optional[models.SocialProfile] = None
+    social_profile: Optional[models.SocialProfile] = None,
+    db: Optional[Session] = None
 ) -> Dict[str, Any]:
     """
     Post content to X (Twitter) using Twitter API v2.
@@ -29,6 +82,7 @@ def post_to_x(
         access_token: OAuth 2.0 Bearer token for Twitter API
         media_urls: Optional list of media URLs to attach
         social_profile: Optional SocialProfile object for additional context
+        db: Optional database session for disconnecting user if token is invalid
         
     Returns:
         Dict containing the post response with 'id' and other fields
@@ -36,6 +90,16 @@ def post_to_x(
     Raises:
         PlatformPostError: If posting fails
     """
+    # Validate token before posting
+    is_valid, error_msg = validate_x_token(access_token)
+    if not is_valid:
+        # Disconnect user if we have the social profile and database session
+        if social_profile and db:
+            social_profile.status = "disconnected"
+            social_profile.access_token = None
+            db.commit()
+        raise PlatformPostError(f"X token validation failed: {error_msg}")
+    
     try:
         # Twitter API v2 endpoint for creating tweets
         url = "https://api.twitter.com/2/tweets"
@@ -76,11 +140,41 @@ def post_to_x(
     except requests.exceptions.RequestException as e:
         error_msg = f"Failed to post to X: {str(e)}"
         if hasattr(e, 'response') and e.response is not None:
+            status_code = e.response.status_code
+            error_msg += f" (HTTP {status_code})"
+            
+            # Provide specific message for authentication errors
+            if status_code == 401:
+                error_msg = f"Authentication failed: Invalid or expired access token for X (Twitter) API"
+                # Disconnect user if we have the social profile and database session
+                if social_profile and db:
+                    social_profile.status = "disconnected"
+                    social_profile.access_token = None
+                    db.commit()
+            
+            # Try to extract detailed error from response body
             try:
                 error_detail = e.response.json()
-                error_msg += f" - {error_detail}"
-            except Exception as inner_e:
-                error_msg += f" - Status: {e.response.status_code} (Error parsing response: {str(inner_e)})"
+                if isinstance(error_detail, dict):
+                    # Twitter API v2 error format
+                    if "errors" in error_detail:
+                        error_messages = [err.get("message", str(err)) for err in error_detail["errors"]]
+                        error_msg += f" - {', '.join(error_messages)}"
+                    elif "detail" in error_detail:
+                        error_msg += f" - {error_detail['detail']}"
+                    else:
+                        error_msg += f" - {error_detail}"
+                else:
+                    error_msg += f" - {error_detail}"
+            except Exception:
+                # If we can't parse JSON, include the raw response text if available
+                try:
+                    response_text = e.response.text[:200]  # Limit length
+                    if response_text:
+                        error_msg += f" - Response: {response_text}"
+                except Exception:
+                    pass
+        
         raise PlatformPostError(error_msg) from e
 
 
@@ -295,7 +389,8 @@ def post_scheduled_post(
                 content=scheduled_post.content,
                 access_token=social_profile.access_token,
                 media_urls=[media_url] if media_url else None,
-                social_profile=social_profile
+                social_profile=social_profile,
+                db=db
             )
         elif scheduled_post.platform == models.PlatformEnum.tiktok:
             result = post_to_tiktok(
