@@ -11,7 +11,9 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 @router.post("", response_model=schemas.ScheduledPostOut, status_code=201)
 def schedule_post(payload: schemas.ScheduledPostCreate, db: Session = Depends(get_db)):
-    if not db.get(models.Business, payload.business_id):
+    if not db.get(models.User, payload.user_id):
+        raise HTTPException(400, "Invalid user_id")
+    if payload.business_id and not db.get(models.Business, payload.business_id):
         raise HTTPException(400, "Invalid business_id")
     if payload.campaign_id and not db.get(models.Campaign, payload.campaign_id):
         raise HTTPException(400, "Invalid campaign_id")

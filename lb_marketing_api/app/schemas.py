@@ -114,16 +114,18 @@ class MediaAssetOut(BaseModel):
         from_attributes = True
 
 class ScheduledPostCreate(BaseModel):
-    business_id: int
+    user_id: int
     platform: PlatformEnum
     content: str = Field(..., max_length=2000)
     scheduled_at: datetime
+    business_id: Optional[int] = None
     campaign_id: Optional[int] = None
     media_asset_id: Optional[int] = None
 
 class ScheduledPostOut(BaseModel):
     id: int
-    business_id: int
+    user_id: int
+    business_id: Optional[int] = None
     campaign_id: Optional[int] = None
     platform: PlatformEnum
     content: str

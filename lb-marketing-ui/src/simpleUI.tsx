@@ -14,11 +14,7 @@ import { Switch } from "./components/ui/Switch";
 import { Label } from "./components/ui/Label";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/Tabs";
-import {
-  Twitter,
-  Music,
-  CheckCircle2,
-} from "lucide-react";
+import { Twitter, Music, CheckCircle2 } from "lucide-react";
 import { api } from "./lib/api";
 import { getUser, isAuthenticated, clearAuth, type User } from "./lib/auth";
 import Login from "./components/Login";
@@ -42,10 +38,14 @@ export default function SimpleMarketingDashboard() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [platformConnections, setPlatformConnections] = useState<Record<string, { connected: boolean; handle: string | null }>>({});
+  const [platformConnections, setPlatformConnections] = useState<
+    Record<string, { connected: boolean; handle: string | null }>
+  >({});
   const [checkingConnection, setCheckingConnection] = useState<boolean>(true);
   const [publishing, setPublishing] = useState<boolean>(false);
-  const [disconnecting, setDisconnecting] = useState<Record<string, boolean>>({});
+  const [disconnecting, setDisconnecting] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Helper function to convert local datetime to UTC ISO string
   const convertLocalToUTC = (localDateTimeString: string): string => {
@@ -94,10 +94,16 @@ export default function SimpleMarketingDashboard() {
       if (res.ok) {
         const data = await res.json();
         // Convert backend platform keys to UI platform keys
-        const uiConnections: Record<string, { connected: boolean; handle: string | null }> = {};
+        const uiConnections: Record<
+          string,
+          { connected: boolean; handle: string | null }
+        > = {};
         for (const [backendPlatform, status] of Object.entries(data)) {
           const uiPlatform = mapBackendToUiPlatform(backendPlatform);
-          uiConnections[uiPlatform] = status as { connected: boolean; handle: string | null };
+          uiConnections[uiPlatform] = status as {
+            connected: boolean;
+            handle: string | null;
+          };
         }
         setPlatformConnections(uiConnections);
       }
@@ -141,9 +147,9 @@ export default function SimpleMarketingDashboard() {
   // Check all platform connection statuses on mount and when user changes
   useEffect(() => {
     if (!user) return; // Only check if user is authenticated
-    
+
     checkAllPlatformConnections();
-    
+
     // Handle OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
     const oauthParam = urlParams.get("oauth");
@@ -155,12 +161,17 @@ export default function SimpleMarketingDashboard() {
       setTimeout(() => {
         checkAllPlatformConnections();
         if (platform) {
-          const platformName = platform === "x" ? "Twitter/X" : platform.charAt(0).toUpperCase() + platform.slice(1);
+          const platformName =
+            platform === "x"
+              ? "Twitter/X"
+              : platform.charAt(0).toUpperCase() + platform.slice(1);
           alert(`Successfully connected to ${platformName}!`);
         }
       }, 1000);
     } else if (oauthParam === "error") {
-      const errorMessage = urlParams.get("error") || "An error occurred during OAuth authorization";
+      const errorMessage =
+        urlParams.get("error") ||
+        "An error occurred during OAuth authorization";
       // Clear the URL parameter
       window.history.replaceState({}, document.title, window.location.pathname);
       // Show error message
@@ -174,7 +185,9 @@ export default function SimpleMarketingDashboard() {
     if (!user) return; // Only run if user is authenticated
     if (!checkingConnection && !isPlatformConnected(platform)) {
       // Find first connected platform
-      const firstConnected = platformOptions.find(opt => isPlatformConnected(opt.value));
+      const firstConnected = platformOptions.find((opt) =>
+        isPlatformConnected(opt.value)
+      );
       if (firstConnected) {
         setPlatform(firstConnected.value);
       }
@@ -220,14 +233,16 @@ export default function SimpleMarketingDashboard() {
     try {
       await api.authorizePlatform(backendPlatform);
     } catch (error) {
-      console.error('Failed to authorize platform:', error);
-      setError(error instanceof Error ? error.message : 'Failed to connect platform');
+      console.error("Failed to authorize platform:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to connect platform"
+      );
     }
   };
 
   const handlePlatformDisconnect = async (platform: string) => {
     const backendPlatform = mapUiToBackendPlatform(platform);
-    setDisconnecting(prev => ({ ...prev, [platform]: true }));
+    setDisconnecting((prev) => ({ ...prev, [platform]: true }));
     try {
       const res = await api.disconnectPlatform(backendPlatform);
       if (res.ok) {
@@ -241,7 +256,7 @@ export default function SimpleMarketingDashboard() {
       console.error(`Failed to disconnect ${platform}:`, err);
       alert(err?.message || `Failed to disconnect from ${platform}`);
     } finally {
-      setDisconnecting(prev => ({ ...prev, [platform]: false }));
+      setDisconnecting((prev) => ({ ...prev, [platform]: false }));
     }
   };
 
@@ -258,7 +273,7 @@ export default function SimpleMarketingDashboard() {
 
       const published = await res.json();
       alert(`Successfully published ${published.length} post(s)!`);
-      
+
       // Optionally refresh posts list
       // You might want to fetch posts from the API here
     } catch (err: any) {
@@ -279,16 +294,17 @@ export default function SimpleMarketingDashboard() {
     // Assumption: Use business_id = 1 by default (project doesn't expose business picker in this UI).
     // If scheduling is toggled, use the selected date (converted from local to UTC).
     // Otherwise, use current time (already in UTC via toISOString).
-    const scheduledAt = schedule && selectedDate 
-      ? convertLocalToUTC(selectedDate)
-      : new Date().toISOString();
-    
+    const scheduledAt =
+      schedule && selectedDate
+        ? convertLocalToUTC(selectedDate)
+        : new Date().toISOString();
+
     const payload = {
       business_id: 1,
       platform: mapUiToBackendPlatform(platform),
       content: content.trim(),
       scheduled_at: scheduledAt,
-      campaign_id: null,
+      campaign_id: 1,
       media_asset_id: null,
     };
 
@@ -345,14 +361,16 @@ export default function SimpleMarketingDashboard() {
           {/* Platform Connections */}
           <div className="flex items-center gap-2 flex-wrap">
             {checkingConnection ? (
-              <span className="text-sm text-muted-foreground">Checking connections...</span>
+              <span className="text-sm text-muted-foreground">
+                Checking connections...
+              </span>
             ) : (
               platformOptions.map((opt) => {
                 const connected = isPlatformConnected(opt.value);
                 const handle = getPlatformHandle(opt.value);
                 const Icon = opt.icon;
                 const isDisconnecting = disconnecting[opt.value] || false;
-                
+
                 return (
                   <div key={opt.value} className="flex items-center gap-2">
                     {connected ? (
@@ -364,7 +382,9 @@ export default function SimpleMarketingDashboard() {
                         className="flex items-center gap-2 text-green-600 border-green-600 hover:bg-green-50"
                       >
                         <CheckCircle2 className="w-4 h-4" />
-                        {isDisconnecting ? "Disconnecting..." : `Connected${handle ? `: @${handle}` : ""}`}
+                        {isDisconnecting
+                          ? "Disconnecting..."
+                          : `Connected${handle ? `: @${handle}` : ""}`}
                       </Button>
                     ) : (
                       <Button
@@ -392,19 +412,19 @@ export default function SimpleMarketingDashboard() {
             {publishing ? "Publishing..." : "Publish All"}
           </Button>
           {/* Logout Button */}
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={handleLogout} variant="outline" size="sm">
             Logout
           </Button>
         </div>
       </div>
       <Tabs defaultValue="compose">
         <TabsList className="bg-transparent mb-4">
-          <TabsTrigger value="compose" className="px-4 py-2">Compose</TabsTrigger>
-          <TabsTrigger value="posts" className="px-4 py-2">Posts</TabsTrigger>
+          <TabsTrigger value="compose" className="px-4 py-2">
+            Compose
+          </TabsTrigger>
+          <TabsTrigger value="posts" className="px-4 py-2">
+            Posts
+          </TabsTrigger>
         </TabsList>
         {/* Compose tab */}
         <TabsContent value="compose">
@@ -415,10 +435,7 @@ export default function SimpleMarketingDashboard() {
             {/* Platform selector */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="platform">Platform</Label>
-              <Select
-                value={platform}
-                onValueChange={(v) => setPlatform(v)}
-              >
+              <Select value={platform} onValueChange={(v) => setPlatform(v)}>
                 <SelectTrigger id="platform" className="w-full">
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
@@ -426,9 +443,9 @@ export default function SimpleMarketingDashboard() {
                   {platformOptions.map((opt) => {
                     const connected = isPlatformConnected(opt.value);
                     return (
-                      <SelectItem 
-                        key={opt.value} 
-                        value={opt.value} 
+                      <SelectItem
+                        key={opt.value}
+                        value={opt.value}
                         className="flex items-center"
                         disabled={!connected}
                       >
@@ -491,7 +508,8 @@ export default function SimpleMarketingDashboard() {
             {schedule && (
               <div className="flex flex-col gap-2 md:col-span-2">
                 <Label htmlFor="scheduledDate">
-                  Select Date & Time ({getTimezoneName()}) - will be saved as UTC
+                  Select Date & Time ({getTimezoneName()}) - will be saved as
+                  UTC
                 </Label>
                 <Input
                   id="scheduledDate"
@@ -504,8 +522,14 @@ export default function SimpleMarketingDashboard() {
             )}
             <div className="md:col-span-2 flex justify-end">
               <div className="flex flex-col w-full md:w-auto">
-                {error && <div className="text-sm text-red-500 mb-2">{error}</div>}
-                <Button type="submit" className="w-full md:w-auto" disabled={loading}>
+                {error && (
+                  <div className="text-sm text-red-500 mb-2">{error}</div>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full md:w-auto"
+                  disabled={loading}
+                >
                   {loading ? "Creating..." : "Create Post"}
                 </Button>
               </div>
@@ -515,7 +539,9 @@ export default function SimpleMarketingDashboard() {
         {/* Posts tab */}
         <TabsContent value="posts">
           {posts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No posts yet. Create one in the Compose tab.</p>
+            <p className="text-sm text-muted-foreground">
+              No posts yet. Create one in the Compose tab.
+            </p>
           ) : (
             <ScrollArea className="h-96 pr-4">
               <div className="flex flex-col gap-4">

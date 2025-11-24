@@ -37,6 +37,7 @@ class User(Base):
 
     social_profiles = relationship("SocialProfile", back_populates="user", cascade="all, delete-orphan")
     businesses = relationship("Business", back_populates="user", cascade="all, delete-orphan")
+    scheduled_posts = relationship("ScheduledPost", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password: str):
         self.password_hash = pwd_context.hash(password)
@@ -126,8 +127,9 @@ class MediaAsset(Base):
 class ScheduledPost(Base):
     __tablename__ = "scheduled_posts"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"), nullable=True)
     campaign_id: Mapped[int | None] = mapped_column(ForeignKey("campaigns.id", ondelete="SET NULL"))
     platform: Mapped[PlatformEnum] = mapped_column(SAEnum(PlatformEnum), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
@@ -137,6 +139,7 @@ class ScheduledPost(Base):
     external_post_id: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
+    user = relationship("User", back_populates="scheduled_posts")
     business = relationship("Business", back_populates="posts")
     campaign = relationship("Campaign", back_populates="posts")
     media_asset = relationship("MediaAsset", back_populates="posts")
