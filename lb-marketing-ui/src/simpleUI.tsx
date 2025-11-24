@@ -15,7 +15,7 @@ import { Label } from "./components/ui/Label";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/Tabs";
 import { Tooltip } from "./components/ui/tooltip";
-import { Twitter, Music, CheckCircle2 } from "lucide-react";
+import { Music, CheckCircle2 } from "lucide-react";
 import { api } from "./lib/api";
 import { getUser, isAuthenticated, clearAuth, type User } from "./lib/auth";
 import Login from "./components/Login";
@@ -36,7 +36,7 @@ export default function SimpleMarketingDashboard() {
     media_asset_id?: number | null;
     external_post_id?: string | null;
   }
-  const [platform, setPlatform] = useState<string>("twitter");
+  const [platform, setPlatform] = useState<string>("x");
   const [tone, setTone] = useState<string>("professional");
   const [mediaUrl, setMediaUrl] = useState<string>("");
   const [content, setContent] = useState<string>("");
@@ -88,18 +88,16 @@ export default function SimpleMarketingDashboard() {
 
   // Map UI platform values to backend platform values
   const mapUiToBackendPlatform = (uiPlatform: string): string => {
-    if (uiPlatform === "twitter") return "x";
     return uiPlatform;
   };
 
   // Map backend platform values to UI platform values
   const mapBackendToUiPlatform = (backendPlatform: string): string => {
-    if (backendPlatform === "x") return "twitter";
     return backendPlatform;
   };
 
   const platformOptions = [
-    { label: "Twitter", value: "twitter", icon: Twitter },
+    { label: "X", value: "x", icon: null },
     { label: "TikTok", value: "tiktok", icon: Music },
   ];
 
@@ -204,7 +202,7 @@ export default function SimpleMarketingDashboard() {
         if (platform) {
           const platformName =
             platform === "x"
-              ? "Twitter/X"
+              ? "X"
               : platform.charAt(0).toUpperCase() + platform.slice(1);
           alert(`Successfully connected to ${platformName}!`);
         }
@@ -225,9 +223,9 @@ export default function SimpleMarketingDashboard() {
   useEffect(() => {
     if (!user) return; // Only run if user is authenticated
     if (!checkingConnection) {
-      // If TikTok is selected, switch to Twitter
+      // If TikTok is selected, switch to X
       if (platform === "tiktok") {
-        setPlatform("twitter");
+        setPlatform("x");
         return;
       }
       // If current platform is disconnected, find first connected platform
@@ -388,10 +386,9 @@ export default function SimpleMarketingDashboard() {
   };
 
   const getPlatformIcon = (platformKey: string) => {
-    // Accept both UI and backend keys (backend may return 'x' for Twitter)
-    const normalized = platformKey === "x" ? "twitter" : platformKey;
-    const found = platformOptions.find((p) => p.value === normalized);
-    return found ? <found.icon className="w-4 h-4 mr-2" /> : null;
+    // Accept both UI and backend keys
+    const found = platformOptions.find((p) => p.value === platformKey);
+    return found && found.icon ? <found.icon className="w-4 h-4 mr-2" /> : null;
   };
 
   return (
@@ -444,7 +441,7 @@ export default function SimpleMarketingDashboard() {
                           disabled={isTikTok}
                           className="flex items-center gap-2"
                         >
-                          <Icon className="w-4 h-4" />
+                          {Icon && <Icon className="w-4 h-4" />}
                           Connect {opt.label}
                         </Button>
                       </Tooltip>
@@ -458,7 +455,7 @@ export default function SimpleMarketingDashboard() {
                         disabled={isTikTok}
                         className="flex items-center gap-2"
                       >
-                        <Icon className="w-4 h-4" />
+                        {Icon && <Icon className="w-4 h-4" />}
                         Connect {opt.label}
                       </Button>
                     )}
@@ -501,7 +498,7 @@ export default function SimpleMarketingDashboard() {
             <div className="flex flex-col gap-2">
               <Label htmlFor="platform">Platform</Label>
               <Select
-                value={platform === "tiktok" ? "twitter" : platform}
+                value={platform === "tiktok" ? "x" : platform}
                 onValueChange={(v) => {
                   if (v !== "tiktok") {
                     setPlatform(v);
@@ -530,7 +527,7 @@ export default function SimpleMarketingDashboard() {
                             : "Not Connected"
                         }
                       >
-                        <opt.icon className="w-4 h-4 mr-2" />
+                        {opt.icon && <opt.icon className="w-4 h-4 mr-2" />}
                         {opt.label} {connected ? "" : "(Not Connected)"}{" "}
                         {isTikTok ? "(Coming soon)" : ""}
                       </SelectItem>

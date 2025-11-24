@@ -4,7 +4,7 @@ Marketing dashboard UI for scheduling and publishing social media posts.
 
 ## Features
 
-- 📝 Create and schedule posts for multiple platforms (Twitter/X, Facebook, Instagram, LinkedIn, YouTube)
+- 📝 Create and schedule posts for multiple platforms (X, Facebook, Instagram, LinkedIn, YouTube)
 - ⏰ Schedule posts for future publishing
 - 🔗 OAuth integration for social media platforms
 - 📊 View and manage scheduled posts
