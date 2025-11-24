@@ -248,16 +248,25 @@ def post_scheduled_post(
             f"Post {scheduled_post.id} is not in scheduled status. Current status: {scheduled_post.status}"
         )
     
-    # Find the social profile for this business and platform
-    social_profile = db.query(models.SocialProfile).filter(
-        models.SocialProfile.business_id == scheduled_post.business_id,
+    # Find the social profile for this user and platform
+    # If business_id is provided, prefer profiles associated with that business
+    # Otherwise, use any profile for the user on this platform
+    query = db.query(models.SocialProfile).filter(
+        models.SocialProfile.user_id == scheduled_post.user_id,
         models.SocialProfile.platform == scheduled_post.platform,
         models.SocialProfile.status == "connected"
-    ).first()
+    )
+    
+    # If business_id is provided, prefer profiles for that business
+    if scheduled_post.business_id:
+        query = query.filter(models.SocialProfile.business_id == scheduled_post.business_id)
+    
+    social_profile = query.first()
     
     if not social_profile:
+        business_msg = f" for business {scheduled_post.business_id}" if scheduled_post.business_id else ""
         raise PlatformPostError(
-            f"No connected social profile found for business {scheduled_post.business_id} "
+            f"No connected social profile found for user {scheduled_post.user_id}{business_msg} "
             f"on platform {scheduled_post.platform.value}"
         )
     
