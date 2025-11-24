@@ -252,9 +252,13 @@ export default function SimpleMarketingDashboard() {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`Failed to disconnect ${platform}:`, err);
-      alert(err?.message || `Failed to disconnect from ${platform}`);
+      const message =
+        err instanceof Error
+          ? err.message
+          : `Failed to disconnect from ${platform}`;
+      alert(message);
     } finally {
       setDisconnecting((prev) => ({ ...prev, [platform]: false }));
     }
@@ -276,8 +280,10 @@ export default function SimpleMarketingDashboard() {
 
       // Optionally refresh posts list
       // You might want to fetch posts from the API here
-    } catch (err: any) {
-      setError(err?.message || "Failed to publish posts");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to publish posts";
+      setError(message);
     } finally {
       setPublishing(false);
     }
@@ -300,11 +306,10 @@ export default function SimpleMarketingDashboard() {
         : new Date().toISOString();
 
     const payload = {
-      business_id: 1,
+      user_id: user.id,
       platform: mapUiToBackendPlatform(platform),
       content: content.trim(),
       scheduled_at: scheduledAt,
-      campaign_id: 1,
       media_asset_id: null,
     };
 
@@ -334,8 +339,10 @@ export default function SimpleMarketingDashboard() {
       setMediaUrl("");
       setSchedule(false);
       setSelectedDate("");
-    } catch (err: any) {
-      setError(err?.message || "Failed to create post");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to create post";
+      setError(message);
     } finally {
       setLoading(false);
     }
