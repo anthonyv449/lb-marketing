@@ -14,6 +14,7 @@ import { Switch } from "./components/ui/Switch";
 import { Label } from "./components/ui/Label";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/Tabs";
+import { Tooltip } from "./components/ui/tooltip";
 import { Twitter, Music, CheckCircle2 } from "lucide-react";
 import { api } from "./lib/api";
 import { getUser, isAuthenticated, clearAuth, type User } from "./lib/auth";
@@ -220,16 +221,23 @@ export default function SimpleMarketingDashboard() {
     }
   }, [user, checkAllPlatformConnections, fetchPosts]);
 
-  // Update platform selection if current platform becomes disconnected
+  // Update platform selection if current platform becomes disconnected or if TikTok is selected
   useEffect(() => {
     if (!user) return; // Only run if user is authenticated
-    if (!checkingConnection && !isPlatformConnected(platform)) {
-      // Find first connected platform
-      const firstConnected = platformOptions.find((opt) =>
-        isPlatformConnected(opt.value)
-      );
-      if (firstConnected) {
-        setPlatform(firstConnected.value);
+    if (!checkingConnection) {
+      // If TikTok is selected, switch to Twitter
+      if (platform === "tiktok") {
+        setPlatform("twitter");
+        return;
+      }
+      // If current platform is disconnected, find first connected platform
+      if (!isPlatformConnected(platform)) {
+        const firstConnected = platformOptions.find(
+          (opt) => opt.value !== "tiktok" && isPlatformConnected(opt.value)
+        );
+        if (firstConnected) {
+          setPlatform(firstConnected.value);
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -408,6 +416,7 @@ export default function SimpleMarketingDashboard() {
                 const handle = getPlatformHandle(opt.value);
                 const Icon = opt.icon;
                 const isDisconnecting = disconnecting[opt.value] || false;
+                const isTikTok = opt.value === "tiktok";
 
                 return (
                   <div key={opt.value} className="flex items-center gap-2">
@@ -424,11 +433,29 @@ export default function SimpleMarketingDashboard() {
                           ? "Disconnecting..."
                           : `Connected${handle ? `: @${handle}` : ""}`}
                       </Button>
+                    ) : isTikTok ? (
+                      <Tooltip content="Coming soon">
+                        <Button
+                          onClick={() =>
+                            !isTikTok && handlePlatformConnect(opt.value)
+                          }
+                          variant="outline"
+                          size="sm"
+                          disabled={isTikTok}
+                          className="flex items-center gap-2"
+                        >
+                          <Icon className="w-4 h-4" />
+                          Connect {opt.label}
+                        </Button>
+                      </Tooltip>
                     ) : (
                       <Button
-                        onClick={() => handlePlatformConnect(opt.value)}
+                        onClick={() =>
+                          !isTikTok && handlePlatformConnect(opt.value)
+                        }
                         variant="outline"
                         size="sm"
+                        disabled={isTikTok}
                         className="flex items-center gap-2"
                       >
                         <Icon className="w-4 h-4" />
@@ -473,22 +500,39 @@ export default function SimpleMarketingDashboard() {
             {/* Platform selector */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="platform">Platform</Label>
-              <Select value={platform} onValueChange={(v) => setPlatform(v)}>
+              <Select
+                value={platform === "tiktok" ? "twitter" : platform}
+                onValueChange={(v) => {
+                  if (v !== "tiktok") {
+                    setPlatform(v);
+                  }
+                }}
+              >
                 <SelectTrigger id="platform" className="w-full">
                   <SelectValue placeholder="Select platform" />
                 </SelectTrigger>
                 <SelectContent>
                   {platformOptions.map((opt) => {
                     const connected = isPlatformConnected(opt.value);
+                    const isTikTok = opt.value === "tiktok";
+                    const isDisabled = isTikTok || !connected;
                     return (
                       <SelectItem
                         key={opt.value}
                         value={opt.value}
                         className="flex items-center"
-                        disabled={!connected}
+                        disabled={isDisabled}
+                        title={
+                          isTikTok
+                            ? "Coming soon"
+                            : connected
+                            ? ""
+                            : "Not Connected"
+                        }
                       >
                         <opt.icon className="w-4 h-4 mr-2" />
-                        {opt.label} {connected ? "" : "(Not Connected)"}
+                        {opt.label} {connected ? "" : "(Not Connected)"}{" "}
+                        {isTikTok ? "(Coming soon)" : ""}
                       </SelectItem>
                     );
                   })}
@@ -524,14 +568,35 @@ export default function SimpleMarketingDashboard() {
             </div>
             {/* Content */}
             <div className="flex flex-col gap-2 md:col-span-2">
-              <Label htmlFor="content">Post content</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="content">Post content</Label>
+                <span
+                  className={`text-sm ${
+                    content.length > 280
+                      ? "text-red-500"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {content.length}/280
+                </span>
+              </div>
               <Textarea
                 id="content"
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value.length <= 280) {
+                    setContent(e.target.value);
+                  }
+                }}
                 placeholder="Write your post..."
                 rows={4}
+                className={content.length > 280 ? "border-red-500" : ""}
               />
+              {content.length > 280 && (
+                <p className="text-sm text-red-500">
+                  Character limit exceeded. Maximum 280 characters allowed.
+                </p>
+              )}
             </div>
             {/* Schedule toggle */}
             <div className="flex items-center gap-2 md:col-span-2">
