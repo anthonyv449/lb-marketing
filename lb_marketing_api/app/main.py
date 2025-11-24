@@ -53,14 +53,19 @@ def healthz():
 @app.post("/seed")
 def seed(db: Session = Depends(get_db)):
     # Simple seed example
-    if not db.query(models.Business).first():
-        acme = models.Business(name="ACME Coffee", email="hello@acme.test")
-        db.add(acme)
-        db.commit()
-        db.refresh(acme)
-        loc = models.Location(business_id=acme.id, name="Main St", city="LA", state="CA", timezone="America/Los_Angeles")
-        db.add(loc)
-        db.commit()
+    if not db.query(models.User).first():
+        adminUser = models.User(email="admin@example.com",  full_name="Admin User")
+        adminUser.set_password("password")
+        db.add(adminUser)
+        try:
+            db.commit()
+            db.refresh(adminUser)
+        except Exception as e:
+            db.rollback()
+            error_msg = f"Could not create admin user: {str(e)}"
+            raise HTTPException(
+                detail=error_msg
+            )
     return {"ok": True}
 
 @app.post("/admin/migrate")
