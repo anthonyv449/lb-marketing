@@ -12,7 +12,7 @@ from .config import settings
 from .db import Base, engine, get_db
 from . import models
 from .auth import get_current_user
-from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth, auth, pdfs
+from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth, auth, pdfs, ai
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -157,3 +157,4 @@ app.include_router(assets.router)
 app.include_router(posts.router)
 app.include_router(oauth.router)
 app.include_router(pdfs.router)
+app.include_router(ai.router)
