@@ -79,6 +79,28 @@ export const api = {
 
   getPost: (id: number) => apiFetch(`/posts/${id}`),
 
+  // Media Assets
+  uploadMedia: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    const token = getAuthToken();
+    const apiUrl = getApiUrl();
+    const url = apiUrl ? `${apiUrl}/assets/upload` : "/assets/upload";
+    
+    const headers: HeadersInit = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token.toString()}`;
+    }
+    // Don't set Content-Type - browser will set it with boundary for FormData
+    
+    return fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+  },
+
   publishPost: (id: number) =>
     apiFetch(`/posts/${id}/publish`, {
       method: "POST",
