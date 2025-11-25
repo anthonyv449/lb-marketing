@@ -171,6 +171,51 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
         raise PlatformPostError(error_msg) from e
 
 
+def _split_content_into_chunks(content: str, max_length: int = 280) -> List[str]:
+    """
+    Split content into chunks of max_length characters, trying to break at word boundaries.
+    
+    Args:
+        content: The text content to split
+        max_length: Maximum length for each chunk (default: 280 for Twitter)
+        
+    Returns:
+        List of content chunks
+    """
+    if len(content) <= max_length:
+        return [content]
+    
+    chunks = []
+    remaining = content
+    
+    while len(remaining) > max_length:
+        # Try to find a good break point (space, newline, or punctuation)
+        chunk = remaining[:max_length]
+        
+        # Look for the last space, newline, or common punctuation in the chunk
+        break_chars = ['\n', '. ', '! ', '? ', ' ']
+        break_pos = -1
+        
+        for break_char in break_chars:
+            pos = chunk.rfind(break_char)
+            if pos > max_length * 0.7:  # Only break if we're at least 70% through the chunk
+                break_pos = pos + len(break_char)
+                break
+        
+        # If no good break point found, just cut at max_length
+        if break_pos == -1:
+            break_pos = max_length
+        
+        chunks.append(remaining[:break_pos].strip())
+        remaining = remaining[break_pos:].strip()
+    
+    # Add the remaining content
+    if remaining:
+        chunks.append(remaining)
+    
+    return chunks
+
+
 def post_to_x(
     content: str,
     access_token: str,
@@ -182,6 +227,7 @@ def post_to_x(
 ) -> Dict[str, Any]:
     """
     Post content to X (Twitter) using Twitter API v2.
+    If content exceeds 280 characters, creates a thread of tweets.
     
     Args:
         content: The text content to post
@@ -194,6 +240,7 @@ def post_to_x(
         
     Returns:
         Dict containing the post response with 'id' and other fields
+        For threads, returns the ID of the first tweet in the thread
         
     Raises:
         PlatformPostError: If posting fails
@@ -209,7 +256,7 @@ def post_to_x(
         raise PlatformPostError(f"X token validation failed: {error_msg}")
     
     try:
-        # Upload media if provided
+        # Upload media if provided (only for first tweet in thread)
         media_ids = []
         if media_data and media_type:
             logger.info(f"Posting tweet with media - content length: {len(content)} chars, media_type: {media_type}")
@@ -219,6 +266,12 @@ def post_to_x(
         else:
             logger.info(f"Posting tweet without media - content length: {len(content)} chars")
         
+        # Split content into chunks if it exceeds 280 characters
+        content_chunks = _split_content_into_chunks(content, max_length=280)
+        
+        if len(content_chunks) > 1:
+            logger.info(f"Content exceeds 280 characters, splitting into {len(content_chunks)} tweets for thread")
+        
         # Twitter API v2 endpoint for creating tweets
         url = "https://api.twitter.com/2/tweets"
         
@@ -227,47 +280,74 @@ def post_to_x(
             "Content-Type": "application/json"
         }
         
-        payload: Dict[str, Any] = {
-            "text": content
-        }
+        first_tweet_id = None
+        previous_tweet_id = None
         
-        # Add media if we have media_ids
-        if media_ids:
-            payload["media"] = {
-                "media_ids": media_ids
+        # Post each chunk as a tweet (or reply)
+        for i, chunk in enumerate(content_chunks):
+            payload: Dict[str, Any] = {
+                "text": chunk
             }
+            
+            # Add media only to the first tweet
+            if i == 0 and media_ids:
+                payload["media"] = {
+                    "media_ids": media_ids
+                }
+            
+            # If this is a reply, add the in_reply_to_tweet_id
+            if previous_tweet_id:
+                payload["reply"] = {
+                    "in_reply_to_tweet_id": previous_tweet_id
+                }
+            
+            logger.info(f"Posting tweet {i+1}/{len(content_chunks)} to X - content preview: {chunk[:100]}..., has_media: {i == 0 and len(media_ids) > 0}, is_reply: {previous_tweet_id is not None}")
+            
+            response = requests.post(url, json=payload, headers=headers)
+            
+            logger.info(f"Tweet post response status: {response.status_code}")
+            logger.debug(f"Tweet post response: {response.text}")
+            
+            response.raise_for_status()
+            
+            result = response.json()
+            logger.info(f"Tweet post response data: {result}")
+            
+            # Check for errors in the response body (Twitter API can return errors even with 200 status)
+            if "errors" in result:
+                error_details = result.get("errors", [])
+                error_messages = [str(err) for err in error_details]
+                error_msg = f"Twitter API returned errors: {', '.join(error_messages)}"
+                logger.error(f"Error posting tweet to X: {error_msg}, response: {result}")
+                raise PlatformPostError(error_msg)
+            
+            # Extract the tweet ID from the response
+            if "data" in result and "id" in result["data"]:
+                tweet_id = result["data"]["id"]
+                
+                # Store the first tweet ID to return
+                if first_tweet_id is None:
+                    first_tweet_id = tweet_id
+                
+                # Update previous_tweet_id for the next reply
+                previous_tweet_id = tweet_id
+                
+                logger.info(f"Successfully posted tweet {i+1}/{len(content_chunks)} to X - tweet_id: {tweet_id}, content: {chunk[:100]}...")
+            else:
+                error_msg = f"Unexpected response format: {result}"
+                logger.error(f"Error posting tweet to X: {error_msg}")
+                raise PlatformPostError(error_msg)
         
-        logger.info(f"Posting tweet to X - content preview: {content[:100]}..., has_media: {len(media_ids) > 0}")
-        
-        response = requests.post(url, json=payload, headers=headers)
-        
-        logger.info(f"Tweet post response status: {response.status_code}")
-        logger.debug(f"Tweet post response: {response.text}")
-        
-        response.raise_for_status()
-        
-        result = response.json()
-        logger.info(f"Tweet post response data: {result}")
-        
-        # Check for errors in the response body (Twitter API can return errors even with 200 status)
-        if "errors" in result:
-            error_details = result.get("errors", [])
-            error_messages = [str(err) for err in error_details]
-            error_msg = f"Twitter API returned errors: {', '.join(error_messages)}"
-            logger.error(f"Error posting tweet to X: {error_msg}, response: {result}")
-            raise PlatformPostError(error_msg)
-        
-        # Extract the tweet ID from the response
-        if "data" in result and "id" in result["data"]:
-            tweet_id = result["data"]["id"]
-            logger.info(f"Successfully posted tweet to X - tweet_id: {tweet_id}, content: {content[:100]}...")
+        # Return the first tweet ID (representing the thread)
+        if first_tweet_id:
+            logger.info(f"Successfully posted thread to X - first_tweet_id: {first_tweet_id}, total_tweets: {len(content_chunks)}")
             return {
-                "external_post_id": tweet_id,
-                "platform_response": result
+                "external_post_id": first_tweet_id,
+                "platform_response": {"thread_count": len(content_chunks)}
             }
         else:
-            error_msg = f"Unexpected response format: {result}"
-            logger.error(f"Error posting tweet to X: {error_msg}")
+            error_msg = "Failed to post any tweets in thread"
+            logger.error(f"Error posting thread to X: {error_msg}")
             raise PlatformPostError(error_msg)
             
     except requests.exceptions.RequestException as e:
