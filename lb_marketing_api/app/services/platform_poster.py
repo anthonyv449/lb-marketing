@@ -1,13 +1,15 @@
 """
-Platform posting service for X (Twitter), TikTok, and Facebook.
-Handles posting scheduled posts to social media platforms via their APIs.
+Platform posting service for X (Twitter).
+Handles posting scheduled posts to X via their API.
 """
 
 import requests
 from typing import Optional, Dict, Any, List, Tuple
 from sqlalchemy.orm import Session
+import io
 
 from .. import models
+from ..services.storage import storage_service
 
 
 class PlatformPostError(Exception):
@@ -67,10 +69,77 @@ def validate_x_token(access_token: str) -> Tuple[bool, Optional[str]]:
         return True, f"Unable to validate token: {str(e)}"
 
 
+def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> str:
+    """
+    Upload media to X (Twitter) using API v2 and return the media_id.
+    
+    Args:
+        media_data: The media file as bytes
+        media_type: MIME type of the media (e.g., 'image/jpeg', 'image/png', 'image/gif')
+        access_token: OAuth 2.0 Bearer token for Twitter API
+        
+    Returns:
+        media_id string to use when creating the tweet
+        
+    Raises:
+        PlatformPostError: If upload fails
+    """
+    try:
+        # X (Twitter) API v2 media upload endpoint
+        upload_url = "https://api.x.com/2/media/upload"
+        
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        
+        # X requires multipart/form-data for media upload
+        files = {
+            "media": ("media", io.BytesIO(media_data), media_type)
+        }
+        
+        response = requests.post(upload_url, headers=headers, files=files)
+        response.raise_for_status()
+        
+        result = response.json()
+        
+        # Check for errors in the response
+        if "errors" in result:
+            error_details = result.get("errors", [])
+            error_messages = [str(err) for err in error_details]
+            raise PlatformPostError(f"X API returned errors: {', '.join(error_messages)}")
+        
+        # Extract media_id from response (X API v2 returns data.id)
+        if "data" in result and "id" in result["data"]:
+            return str(result["data"]["id"])
+        else:
+            raise PlatformPostError(f"Unexpected media upload response format: {result}")
+            
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Failed to upload media to X: {str(e)}"
+        if hasattr(e, 'response') and e.response is not None:
+            status_code = e.response.status_code
+            error_msg += f" (HTTP {status_code})"
+            try:
+                error_detail = e.response.json()
+                if isinstance(error_detail, dict):
+                    if "errors" in error_detail:
+                        error_messages = [err.get("message", str(err)) for err in error_detail["errors"]]
+                        error_msg += f" - {', '.join(error_messages)}"
+                    else:
+                        error_msg += f" - {error_detail}"
+                else:
+                    error_msg += f" - {error_detail}"
+            except Exception:
+                error_msg += f" - Status: {e.response.status_code}"
+        raise PlatformPostError(error_msg) from e
+
+
 def post_to_x(
     content: str,
     access_token: str,
     media_urls: Optional[List[str]] = None,
+    media_data: Optional[bytes] = None,
+    media_type: Optional[str] = None,
     social_profile: Optional[models.SocialProfile] = None,
     db: Optional[Session] = None
 ) -> Dict[str, Any]:
@@ -80,7 +149,9 @@ def post_to_x(
     Args:
         content: The text content to post
         access_token: OAuth 2.0 Bearer token for Twitter API
-        media_urls: Optional list of media URLs to attach
+        media_urls: Optional list of media URLs (deprecated, use media_data instead)
+        media_data: Optional media file as bytes to upload
+        media_type: Optional MIME type of the media (required if media_data is provided)
         social_profile: Optional SocialProfile object for additional context
         db: Optional database session for disconnecting user if token is invalid
         
@@ -101,6 +172,12 @@ def post_to_x(
         raise PlatformPostError(f"X token validation failed: {error_msg}")
     
     try:
+        # Upload media if provided
+        media_ids = []
+        if media_data and media_type:
+            media_id = upload_media_to_x(media_data, media_type, access_token)
+            media_ids.append(media_id)
+        
         # Twitter API v2 endpoint for creating tweets
         url = "https://api.twitter.com/2/tweets"
         
@@ -113,9 +190,11 @@ def post_to_x(
             "text": content
         }
         
-        # If media URLs are provided, we'd need to upload them first
-        # For now, we'll just post text content
-        # TODO: Implement media upload for X API
+        # Add media if we have media_ids
+        if media_ids:
+            payload["media"] = {
+                "media_ids": media_ids
+            }
         
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
@@ -178,153 +257,6 @@ def post_to_x(
         raise PlatformPostError(error_msg) from e
 
 
-def post_to_facebook(
-    content: str,
-    access_token: str,
-    page_id: Optional[str] = None,
-    media_url: Optional[str] = None,
-    social_profile: Optional[models.SocialProfile] = None
-) -> Dict[str, Any]:
-    """
-    Post content to Facebook using Facebook Graph API.
-    
-    Args:
-        content: The text content to post
-        access_token: Page access token for Facebook API
-        page_id: Optional Facebook page ID (if not provided, uses profile's external_id)
-        media_url: Optional media URL to attach
-        social_profile: Optional SocialProfile object for additional context
-        
-    Returns:
-        Dict containing the post response with 'id' and other fields
-        
-    Raises:
-        PlatformPostError: If posting fails
-    """
-    try:
-        # Use page_id from social_profile if not provided
-        if not page_id and social_profile and social_profile.external_id:
-            page_id = social_profile.external_id
-        
-        if not page_id:
-            raise PlatformPostError("Facebook page_id is required for posting")
-        
-        # Facebook Graph API endpoint for posting to a page
-        url = f"https://graph.facebook.com/v18.0/{page_id}/feed"
-        
-        params = {
-            "message": content,
-            "access_token": access_token
-        }
-        
-        # If media URL is provided, use photos endpoint instead
-        if media_url:
-            url = f"https://graph.facebook.com/v18.0/{page_id}/photos"
-            params["url"] = media_url
-            params["message"] = content
-        
-        response = requests.post(url, params=params)
-        response.raise_for_status()
-        
-        result = response.json()
-        
-        # Extract the post ID from the response
-        if "id" in result:
-            return {
-                "external_post_id": result["id"],
-                "platform_response": result
-            }
-        else:
-            raise PlatformPostError(f"Unexpected response format: {result}")
-            
-    except requests.exceptions.RequestException as e:
-        error_msg = f"Failed to post to Facebook: {str(e)}"
-        if hasattr(e, 'response') and e.response is not None:
-            try:
-                error_detail = e.response.json()
-                error_msg += f" - {error_detail}"
-            except Exception as inner_e:
-                error_msg += f" - Status: {e.response.status_code} (Error parsing response: {str(inner_e)})"
-        raise PlatformPostError(error_msg) from e
-
-
-def post_to_tiktok(
-    content: str,
-    access_token: str,
-    media_urls: Optional[List[str]] = None,
-    social_profile: Optional[models.SocialProfile] = None
-) -> Dict[str, Any]:
-    """
-    Post content to TikTok using TikTok API v2.
-    
-    Args:
-        content: The text content to post
-        access_token: OAuth 2.0 Bearer token for TikTok API
-        media_urls: Optional list of media URLs to attach
-        social_profile: Optional SocialProfile object for additional context
-        
-    Returns:
-        Dict containing the post response with 'id' and other fields
-        
-    Raises:
-        PlatformPostError: If posting fails
-    """
-    try:
-        # TikTok API v2 endpoint for creating videos/posts
-        # Note: TikTok API requires video upload, text-only posts may not be supported
-        # This is a simplified implementation - in production, you'd need to handle video uploads
-        url = "https://open.tiktokapis.com/v2/post/publish/video/init/"
-        
-        headers = {
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json"
-        }
-        
-        # TikTok requires video content, so we'll create a text post if no media is provided
-        # In a real implementation, you'd need to upload video first
-        payload: Dict[str, Any] = {
-            "post_info": {
-                "title": content[:100],  # TikTok title limit
-                "privacy_level": "PUBLIC_TO_EVERYONE",
-                "disable_duet": False,
-                "disable_comment": False,
-                "disable_stitch": False,
-                "video_cover_timestamp_ms": 1000
-            },
-            "source_info": {
-                "source": "FILE_UPLOAD"
-            }
-        }
-        
-        # If media URLs are provided, we'd need to upload them first
-        # For now, this is a placeholder - TikTok API requires video upload workflow
-        # TODO: Implement proper video upload for TikTok API
-        
-        response = requests.post(url, json=payload, headers=headers)
-        response.raise_for_status()
-        
-        result = response.json()
-        
-        # Extract the post ID from the response
-        if "data" in result and "publish_id" in result["data"]:
-            return {
-                "external_post_id": result["data"]["publish_id"],
-                "platform_response": result
-            }
-        else:
-            raise PlatformPostError(f"Unexpected response format: {result}")
-            
-    except requests.exceptions.RequestException as e:
-        error_msg = f"Failed to post to TikTok: {str(e)}"
-        if hasattr(e, 'response') and e.response is not None:
-            try:
-                error_detail = e.response.json()
-                error_msg += f" - {error_detail}"
-            except Exception as inner_e:
-                error_msg += f" - Status: {e.response.status_code} (Error parsing response: {str(inner_e)})"
-        raise PlatformPostError(error_msg) from e
-
-
 def post_scheduled_post(
     scheduled_post: models.ScheduledPost,
     db: Session
@@ -375,42 +307,36 @@ def post_scheduled_post(
             f"No access token found for social profile {social_profile.id}"
         )
     
-    # Get media URL if media_asset_id is present
-    media_url = None
+    # Get media data from Azure Storage if media_asset_id is present
+    media_data = None
+    media_type = None
     if scheduled_post.media_asset_id:
         media_asset = db.get(models.MediaAsset, scheduled_post.media_asset_id)
         if media_asset:
-            media_url = media_asset.storage_url
+            # Fetch media from Azure Storage
+            media_data = storage_service.get_blob(media_asset.storage_url)
+            if media_data:
+                media_type = media_asset.mime_type
+            else:
+                raise PlatformPostError(
+                    f"Failed to retrieve media from storage: {media_asset.storage_url}"
+                )
     
-    # Post to the appropriate platform
+    # Post to X platform
     try:
-        if scheduled_post.platform == models.PlatformEnum.x:
-            result = post_to_x(
-                content=scheduled_post.content,
-                access_token=social_profile.access_token,
-                media_urls=[media_url] if media_url else None,
-                social_profile=social_profile,
-                db=db
-            )
-        elif scheduled_post.platform == models.PlatformEnum.tiktok:
-            result = post_to_tiktok(
-                content=scheduled_post.content,
-                access_token=social_profile.access_token,
-                media_urls=[media_url] if media_url else None,
-                social_profile=social_profile
-            )
-        elif scheduled_post.platform == models.PlatformEnum.facebook:
-            result = post_to_facebook(
-                content=scheduled_post.content,
-                access_token=social_profile.access_token,
-                page_id=social_profile.external_id,
-                media_url=media_url,
-                social_profile=social_profile
-            )
-        else:
+        if scheduled_post.platform != models.PlatformEnum.x:
             raise PlatformPostError(
-                f"Posting to platform {scheduled_post.platform.value} is not yet implemented"
+                f"Only X (Twitter) platform is supported. Platform {scheduled_post.platform.value} is not supported."
             )
+        
+        result = post_to_x(
+            content=scheduled_post.content,
+            access_token=social_profile.access_token,
+            media_data=media_data,
+            media_type=media_type,
+            social_profile=social_profile,
+            db=db
+        )
         
         # Update the scheduled post with success
         scheduled_post.external_post_id = result["external_post_id"]
