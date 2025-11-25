@@ -1,10 +1,10 @@
-import * as React from "react"
-import { cn } from "../../lib/utils"
+import * as React from "react";
+import { cn } from "../../lib/utils";
 
 interface TooltipProps {
-  content: string
-  children: React.ReactNode
-  className?: string
+  content: string;
+  children: React.ReactNode;
+  className?: string;
 }
 
 export function Tooltip({ content, children, className }: TooltipProps) {
@@ -18,6 +18,5 @@ export function Tooltip({ content, children, className }: TooltipProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

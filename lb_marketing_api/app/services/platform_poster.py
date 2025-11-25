@@ -7,10 +7,13 @@ import requests
 from typing import Optional, Dict, Any, List, Tuple
 from sqlalchemy.orm import Session
 import io
+import logging
 
 from .. import models
-from ..services.storage import logger, storage_service
+from ..services.storage import storage_service
 from ..config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class PlatformPostError(Exception):
@@ -88,6 +91,8 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
         PlatformPostError: If upload fails
     """
     try:
+        logger.info(f"Starting media upload to X - media_type: {media_type}, media_size: {len(media_data)} bytes")
+        
         # X (Twitter) API v1.1 media upload endpoint
         # Note: Media uploads use v1.1 API, but media_id works with v2 tweets
         upload_url = "https://upload.twitter.com/1.1/media/upload.json"
@@ -102,23 +107,36 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
         }
         
         response = requests.post(upload_url, headers=headers, files=files)
+        
+        logger.info(f"Media upload response status: {response.status_code}")
+        logger.debug(f"Media upload response: {response.text}")
+        
         response.raise_for_status()
         
         result = response.json()
+        logger.info(f"Media upload response data: {result}")
         
         # Check for errors in the response
         if "errors" in result:
             error_details = result.get("errors", [])
             error_messages = [str(err) for err in error_details]
-            raise PlatformPostError(f"X API returned errors: {', '.join(error_messages)}")
+            error_msg = f"X API returned errors: {', '.join(error_messages)}"
+            logger.error(f"Error uploading media to X: {error_msg}, response: {result}")
+            raise PlatformPostError(error_msg)
         
         # Extract media_id from response (v1.1 API returns media_id_string or media_id)
         if "media_id_string" in result:
-            return result["media_id_string"]
+            media_id = result["media_id_string"]
+            logger.info(f"Successfully uploaded media to X, media_id: {media_id}")
+            return media_id
         elif "media_id" in result:
-            return str(result["media_id"])
+            media_id = str(result["media_id"])
+            logger.info(f"Successfully uploaded media to X, media_id: {media_id}")
+            return media_id
         else:
-            raise PlatformPostError(f"Unexpected media upload response format: {result}")
+            error_msg = f"Unexpected media upload response format: {result}"
+            logger.error(f"Error uploading media to X: {error_msg}")
+            raise PlatformPostError(error_msg)
             
     except requests.exceptions.RequestException as e:
         error_msg = f"Failed to upload media to X: {str(e)}"
@@ -127,6 +145,7 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
             error_msg += f" (HTTP {status_code})"
             try:
                 error_detail = e.response.json()
+                logger.error(f"Error uploading media to X - HTTP {status_code}, response: {error_detail}")
                 if isinstance(error_detail, dict):
                     if "errors" in error_detail:
                         error_messages = [err.get("message", str(err)) for err in error_detail["errors"]]
@@ -136,7 +155,10 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
                 else:
                     error_msg += f" - {error_detail}"
             except Exception:
+                logger.error(f"Error uploading media to X - HTTP {status_code}, unable to parse response")
                 error_msg += f" - Status: {e.response.status_code}"
+        else:
+            logger.error(f"Error uploading media to X (no response): {str(e)}")
         raise PlatformPostError(error_msg) from e
 
 
@@ -181,8 +203,12 @@ def post_to_x(
         # Upload media if provided
         media_ids = []
         if media_data and media_type:
+            logger.info(f"Posting tweet with media - content length: {len(content)} chars, media_type: {media_type}")
             media_id = upload_media_to_x(media_data, media_type, access_token)
             media_ids.append(media_id)
+            logger.info(f"Media uploaded successfully, media_id: {media_id}")
+        else:
+            logger.info(f"Posting tweet without media - content length: {len(content)} chars")
         
         # Twitter API v2 endpoint for creating tweets
         url = "https://api.twitter.com/2/tweets"
@@ -202,25 +228,38 @@ def post_to_x(
                 "media_ids": media_ids
             }
         
+        logger.info(f"Posting tweet to X - content preview: {content[:100]}..., has_media: {len(media_ids) > 0}")
+        
         response = requests.post(url, json=payload, headers=headers)
+        
+        logger.info(f"Tweet post response status: {response.status_code}")
+        logger.debug(f"Tweet post response: {response.text}")
+        
         response.raise_for_status()
         
         result = response.json()
+        logger.info(f"Tweet post response data: {result}")
         
         # Check for errors in the response body (Twitter API can return errors even with 200 status)
         if "errors" in result:
             error_details = result.get("errors", [])
             error_messages = [str(err) for err in error_details]
-            raise PlatformPostError(f"Twitter API returned errors: {', '.join(error_messages)}")
+            error_msg = f"Twitter API returned errors: {', '.join(error_messages)}"
+            logger.error(f"Error posting tweet to X: {error_msg}, response: {result}")
+            raise PlatformPostError(error_msg)
         
         # Extract the tweet ID from the response
         if "data" in result and "id" in result["data"]:
+            tweet_id = result["data"]["id"]
+            logger.info(f"Successfully posted tweet to X - tweet_id: {tweet_id}, content: {content[:100]}...")
             return {
-                "external_post_id": result["data"]["id"],
+                "external_post_id": tweet_id,
                 "platform_response": result
             }
         else:
-            raise PlatformPostError(f"Unexpected response format: {result}")
+            error_msg = f"Unexpected response format: {result}"
+            logger.error(f"Error posting tweet to X: {error_msg}")
+            raise PlatformPostError(error_msg)
             
     except requests.exceptions.RequestException as e:
         error_msg = f"Failed to post to X: {str(e)}"
@@ -231,6 +270,7 @@ def post_to_x(
             # Provide specific message for authentication errors
             if status_code == 401:
                 error_msg = f"Authentication failed: Invalid or expired access token for X (Twitter) API"
+                logger.error(f"Error posting tweet to X - Authentication failed (401), content attempted: {content[:100]}...")
                 # Disconnect user if we have the social profile and database session
                 if social_profile and db:
                     social_profile.status = "disconnected"
@@ -240,6 +280,7 @@ def post_to_x(
             # Try to extract detailed error from response body
             try:
                 error_detail = e.response.json()
+                logger.error(f"Error posting tweet to X - HTTP {status_code}, response: {error_detail}, content attempted: {content[:100]}...")
                 if isinstance(error_detail, dict):
                     # Twitter API v2 error format
                     if "errors" in error_detail:
@@ -255,10 +296,13 @@ def post_to_x(
                 # If we can't parse JSON, include the raw response text if available
                 try:
                     response_text = e.response.text[:200]  # Limit length
+                    logger.error(f"Error posting tweet to X - HTTP {status_code}, response text: {response_text}, content attempted: {content[:100]}...")
                     if response_text:
                         error_msg += f" - Response: {response_text}"
                 except Exception:
-                    pass
+                    logger.error(f"Error posting tweet to X - HTTP {status_code}, unable to parse response, content attempted: {content[:100]}...")
+        else:
+            logger.error(f"Error posting tweet to X (no response): {str(e)}, content attempted: {content[:100]}...")
         
         raise PlatformPostError(error_msg) from e
 
@@ -368,11 +412,11 @@ def post_scheduled_post(
         
     except PlatformPostError as e:
         # Update status to failed
+        logger.error(f"Setting scheduled post {scheduled_post.id} status to failed. Error: {str(e)}")
         scheduled_post.status = models.PostStatus.failed
         db.commit()
         db.refresh(scheduled_post)
         # Re-raise with the exception message
-        # add logger line to print out the error
         logger.error(f"Error posting scheduled post {scheduled_post.id}: {str(e)}")
         raise PlatformPostError(str(e)) from e
 
