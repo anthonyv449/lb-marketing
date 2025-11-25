@@ -83,17 +83,17 @@ export const api = {
   uploadMedia: async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    
+
     const token = getAuthToken();
     const apiUrl = getApiUrl();
     const url = apiUrl ? `${apiUrl}/assets/upload` : "/assets/upload";
-    
+
     const headers: HeadersInit = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token.toString()}`;
     }
     // Don't set Content-Type - browser will set it with boundary for FormData
-    
+
     return fetch(url, {
       method: "POST",
       headers,
@@ -266,4 +266,11 @@ export const api = {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   },
+
+  // AI Text Generation
+  generateText: (prompt: string, tone?: string) =>
+    apiFetch("/ai/generate", {
+      method: "POST",
+      body: JSON.stringify({ text: prompt, tone }),
+    }),
 };

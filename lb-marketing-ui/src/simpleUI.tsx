@@ -39,6 +39,8 @@ export default function SimpleMarketingDashboard() {
   const [platform, setPlatform] = useState<string>("x");
   const [tone, setTone] = useState<string>("professional");
   const [content, setContent] = useState<string>("");
+  const [aiPrompt, setAiPrompt] = useState<string>("");
+  const [generatingText, setGeneratingText] = useState<boolean>(false);
   const [schedule, setSchedule] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [posts, setPosts] = useState<Post[]>([]);
@@ -335,6 +337,36 @@ export default function SimpleMarketingDashboard() {
     }
   };
 
+  const handleGenerateText = async () => {
+    if (!aiPrompt.trim()) return;
+
+    setGeneratingText(true);
+    setError(null);
+
+    try {
+      const res = await api.generateText(aiPrompt, tone);
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      // Clear existing content and populate with newly generated text
+      // This replaces any previous content in the post content box
+      const generatedText = data.content || data.text || "";
+      setContent(generatedText);
+      // Clear the AI prompt after successful generation
+      setAiPrompt("");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to generate text";
+      setError(message);
+    } finally {
+      setGeneratingText(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -550,37 +582,60 @@ export default function SimpleMarketingDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Content */}
+            {/* AI Text Generation */}
             <div className="flex flex-col gap-2 md:col-span-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="content">Post content</Label>
+                <Label htmlFor="aiPrompt">Generate Post Content with AI</Label>
                 <span
                   className={`text-sm ${
-                    content.length > 280
+                    aiPrompt.length > 280
                       ? "text-red-500"
                       : "text-muted-foreground"
                   }`}
                 >
-                  {content.length}/280
+                  {aiPrompt.length}/280
                 </span>
               </div>
-              <Textarea
-                id="content"
-                value={content}
-                onChange={(e) => {
-                  if (e.target.value.length <= 280) {
-                    setContent(e.target.value);
-                  }
-                }}
-                placeholder="Write your post..."
-                rows={4}
-                className={content.length > 280 ? "border-red-500" : ""}
-              />
-              {content.length > 280 && (
+              <div className="flex gap-2">
+                <Input
+                  id="aiPrompt"
+                  type="text"
+                  value={aiPrompt}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 280) {
+                      setAiPrompt(e.target.value);
+                    }
+                  }}
+                  placeholder="Enter a prompt to generate post content..."
+                  className={`flex-1 ${
+                    aiPrompt.length > 280 ? "border-red-500" : ""
+                  }`}
+                  disabled={generatingText}
+                />
+                <Button
+                  onClick={handleGenerateText}
+                  disabled={generatingText || !aiPrompt.trim()}
+                  variant="outline"
+                >
+                  {generatingText ? "Generating..." : "Generate"}
+                </Button>
+              </div>
+              {aiPrompt.length > 280 && (
                 <p className="text-sm text-red-500">
                   Character limit exceeded. Maximum 280 characters allowed.
                 </p>
               )}
+            </div>
+            {/* Content */}
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <Label htmlFor="content">Post content</Label>
+              <Textarea
+                id="content"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write your post..."
+                rows={4}
+              />
             </div>
             {/* Schedule toggle */}
             <div className="flex items-center gap-2 md:col-span-2">

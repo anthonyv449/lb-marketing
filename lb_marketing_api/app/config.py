@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     AZURE_STORAGE_CONTAINER_NAME: str = ""  # Default container name for PDFs
     AZURE_STORAGE_USER_MEDIA_CONTAINER_NAME: str = ""  # Container name for user media assets
 
+    # Azure OpenAI configuration
+    AZURE_OPENAI_ENDPOINT: str = ""
+    AZURE_OPENAI_API_KEY: str = ""  # Must be set via environment variable
+    AZURE_OPENAI_API_VERSION: str = ""
+    AZURE_OPENAI_DEPLOYMENT: str = ""
+    AZURE_OPENAI_MODEL_NAME: str = ""
+
     @property
     def database_url(self) -> str:
         return (
