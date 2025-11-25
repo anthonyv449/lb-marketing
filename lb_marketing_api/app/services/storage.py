@@ -3,7 +3,7 @@ Azure Blob Storage service for managing PDF files
 """
 import logging
 from typing import Optional
-from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.storage.blob import BlobServiceClient, BlobClient, ContentSettings
 from ..config import settings
 
 logger = logging.getLogger(__name__)
@@ -126,10 +126,11 @@ class StorageService:
                 container=self.container_name,
                 blob=blob_name
             )
+            content_settings = ContentSettings(content_type=content_type)
             blob_client.upload_blob(
                 data,
                 overwrite=True,
-                content_settings={"content_type": content_type}
+                content_settings=content_settings
             )
             logger.info(f"Successfully uploaded blob: {blob_name}")
             return True
