@@ -116,8 +116,8 @@ def publish_posts_batch(post_ids: List[int], db: Session) -> List[schemas.Schedu
         except PlatformPostError as e:
             errors.append(f"Post {post_id}: {str(e)}")
             # Mark post as failed
+            logger.error(f"Setting post {post_id} status to failed. Error: {str(e)}")
             post.status = models.PostStatus.failed
-            # add logger line to print out the error
             logger.error(f"Error publishing post {post_id}: {str(e)}")
             db.commit()
     
