@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from "path"
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
 
 // Tailwind should be configured via PostCSS (postcss.config.js) and tailwind.config.js
 // https://vite.dev/config/
@@ -16,67 +16,72 @@ export default defineConfig({
   server: {
     proxy: {
       // Proxy all API routes to backend
-      '/posts': {
-        target: 'http://localhost:8000',
+      "/posts": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
       // Proxy OAuth routes
-      '/oauth': {
-        target: 'http://localhost:8000',
+      "/oauth": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
       // Proxy social-profiles routes
-      '/social-profiles': {
-        target: 'http://localhost:8000',
+      "/social-profiles": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
       // Proxy authentication routes
-      '/auth': {
-        target: 'http://localhost:8000',
+      "/auth": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
       // Proxy other API routes (businesses, locations, campaigns, assets, etc.)
-      '/businesses': {
-        target: 'http://localhost:8000',
+      "/businesses": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
-      '/locations': {
-        target: 'http://localhost:8000',
+      "/locations": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
-      '/campaigns': {
-        target: 'http://localhost:8000',
+      "/campaigns": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
-      '/assets': {
-        target: 'http://localhost:8000',
+      "/assets": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
-      '/healthz': {
-        target: 'http://localhost:8000',
+      "/healthz": {
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },
-    }
+      "/pdfs": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   // Build configuration
   build: {
-    outDir: 'dist',
+    outDir: "dist",
     sourcemap: false,
-    minify: 'esbuild',
+    minify: "esbuild",
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['lucide-react'],
+          "react-vendor": ["react", "react-dom"],
+          "ui-vendor": ["lucide-react"],
         },
       },
     },
@@ -86,4 +91,4 @@ export default defineConfig({
     port: 4173,
     host: true,
   },
-})
+});

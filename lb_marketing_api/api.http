@@ -294,3 +294,8 @@ Content-Type: application/json
   "media_asset_id": 1
 }
 
+###############################################
+# PDF Download Endpoints
+###############################################
+GET {{baseUrl}}/pdfs/download/business
+Content-Type: application/pdf

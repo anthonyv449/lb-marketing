@@ -722,6 +722,45 @@ export default function SimpleMarketingDashboard() {
           )}
         </TabsContent>
       </Tabs>
+      {/* Bottom left buttons */}
+      <div className="flex gap-2 justify-start mt-auto">
+        <Button
+          variant="outline"
+          size="default"
+          onClick={async () => {
+            try {
+              await api.downloadBusinessPlan();
+            } catch (error) {
+              console.error("Failed to download PDF:", error);
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Failed to download PDF. Please try again later."
+              );
+            }
+          }}
+        >
+          30 Day Plan To Boost Engagement for your Business
+        </Button>
+        <Button
+          variant="outline"
+          size="default"
+          onClick={async () => {
+            try {
+              await api.downloadAffiliatePlan();
+            } catch (error) {
+              console.error("Failed to download PDF:", error);
+              alert(
+                error instanceof Error
+                  ? error.message
+                  : "Failed to download PDF. Please try again later."
+              );
+            }
+          }}
+        >
+          30 Day Plan To Boost Engagement for your Affiliate Marketing Business
+        </Button>
+      </div>
     </div>
   );
 }
