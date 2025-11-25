@@ -1,12 +1,115 @@
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
+import os
 
 from ..db import get_db
 from .. import models, schemas
+from ..auth import get_current_user
+from ..services.storage import storage_service
 
 router = APIRouter(prefix="/assets", tags=["assets"])
+
+# Allowed media types
+ALLOWED_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp"
+}
+
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+
+@router.post("/upload", response_model=schemas.MediaAssetOut, status_code=201)
+async def upload_media(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload media file to Azure Storage and create a MediaAsset record.
+    Files are stored under: user_media_assets/{userId}/{filename}
+    """
+    # Validate file type
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP"
+        )
+    
+    # Validate file extension
+    file_ext = os.path.splitext(file.filename)[1].lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file extension. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    
+    # Get or create a business for the user
+    business = db.query(models.Business).filter(
+        models.Business.user_id == current_user.id
+    ).first()
+    
+    if not business:
+        # Create a default business for the user
+        business = models.Business(
+            user_id=current_user.id,
+            name=f"{current_user.email}'s Business",
+            email=current_user.email
+        )
+        db.add(business)
+        db.commit()
+        db.refresh(business)
+    
+    # Read file content
+    try:
+        file_content = await file.read()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+    
+    # Generate unique filename to avoid collisions
+    # Use UUID + original extension
+    unique_filename = f"{uuid.uuid4()}{file_ext}"
+    blob_name = f"user_media_assets/{current_user.id}/{unique_filename}"
+    
+    # Upload to Azure Storage
+    if not storage_service.blob_service_client:
+        raise HTTPException(
+            status_code=503,
+            detail="Azure Storage is not configured"
+        )
+    
+    # Upload the file
+    upload_success = storage_service.upload_blob(
+        blob_name=blob_name,
+        data=file_content,
+        content_type=file.content_type
+    )
+    
+    if not upload_success:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to upload file to Azure Storage"
+        )
+    
+    # Get the storage URL (construct from blob name)
+    # For now, we'll store the blob path. In production, you might want to generate a full URL
+    storage_url = blob_name
+    
+    # Create MediaAsset record
+    media_asset = models.MediaAsset(
+        business_id=business.id,
+        title=file.filename,
+        storage_url=storage_url,
+        mime_type=file.content_type
+    )
+    db.add(media_asset)
+    db.commit()
+    db.refresh(media_asset)
+    
+    return media_asset
 
 @router.post("", response_model=schemas.MediaAssetOut, status_code=201)
 def create_asset(payload: schemas.MediaAssetCreate, db: Session = Depends(get_db)):

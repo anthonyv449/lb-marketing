@@ -38,7 +38,7 @@ export default function SimpleMarketingDashboard() {
   }
   const [platform, setPlatform] = useState<string>("x");
   const [tone, setTone] = useState<string>("professional");
-  const [mediaUrl, setMediaUrl] = useState<string>("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [content, setContent] = useState<string>("");
   const [schedule, setSchedule] = useState<boolean>(false);
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -352,12 +352,33 @@ export default function SimpleMarketingDashboard() {
         ? convertLocalToUTC(selectedDate)
         : new Date().toISOString();
 
+    let mediaAssetId: number | null = null;
+
+    // Upload media if a file is selected
+    if (mediaFile) {
+      try {
+        const uploadRes = await api.uploadMedia(mediaFile);
+        if (!uploadRes.ok) {
+          const text = await uploadRes.text();
+          throw new Error(text || `HTTP ${uploadRes.status}`);
+        }
+        const mediaAsset = await uploadRes.json();
+        mediaAssetId = mediaAsset.id;
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Failed to upload media";
+        setError(message);
+        setLoading(false);
+        return;
+      }
+    }
+
     const payload = {
       user_id: user.id,
       platform: mapUiToBackendPlatform(platform),
       content: content.trim(),
       scheduled_at: scheduledAt,
-      media_asset_id: null,
+      media_asset_id: mediaAssetId,
     };
 
     try {
@@ -373,9 +394,16 @@ export default function SimpleMarketingDashboard() {
 
       // reset form
       setContent("");
-      setMediaUrl("");
+      setMediaFile(null);
       setSchedule(false);
       setSelectedDate("");
+      // Reset file input
+      const fileInput = document.getElementById(
+        "mediaFile"
+      ) as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Failed to create post";
@@ -552,16 +580,45 @@ export default function SimpleMarketingDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            {/* Media URL */}
+            {/* Media Upload */}
             <div className="flex flex-col gap-2 md:col-span-2">
-              <Label htmlFor="mediaUrl">Media URL (optional)</Label>
+              <Label htmlFor="mediaFile">
+                Media Upload, accepting images or gifs only
+              </Label>
               <Input
-                id="mediaUrl"
-                type="text"
-                value={mediaUrl}
-                onChange={(e) => setMediaUrl(e.target.value)}
-                placeholder="https://..."
+                id="mediaFile"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    // Validate file type
+                    const validTypes = [
+                      "image/jpeg",
+                      "image/png",
+                      "image/gif",
+                      "image/webp",
+                    ];
+                    if (!validTypes.includes(file.type)) {
+                      setError(
+                        "Invalid file type. Please upload JPEG, PNG, GIF, or WEBP only."
+                      );
+                      e.target.value = "";
+                      return;
+                    }
+                    setMediaFile(file);
+                    setError(null);
+                  } else {
+                    setMediaFile(null);
+                  }
+                }}
               />
+              {mediaFile && (
+                <p className="text-sm text-muted-foreground">
+                  Selected: {mediaFile.name} (
+                  {(mediaFile.size / 1024 / 1024).toFixed(2)} MB)
+                </p>
+              )}
             </div>
             {/* Content */}
             <div className="flex flex-col gap-2 md:col-span-2">
