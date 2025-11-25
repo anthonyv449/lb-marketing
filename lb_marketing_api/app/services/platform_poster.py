@@ -10,6 +10,7 @@ import io
 
 from .. import models
 from ..services.storage import storage_service
+from ..config import settings
 
 
 class PlatformPostError(Exception):
@@ -318,8 +319,20 @@ def post_scheduled_post(
     if scheduled_post.media_asset_id:
         media_asset = db.get(models.MediaAsset, scheduled_post.media_asset_id)
         if media_asset:
+            # Extract container and blob name from storage_url
+            # Format: "{container_name}/{userId}/{filename}"
+            # Container name comes from AZURE_STORAGE_USER_MEDIA_CONTAINER_NAME config
+            storage_url_parts = media_asset.storage_url.split("/", 1)
+            if len(storage_url_parts) == 2:
+                container_name = storage_url_parts[0]
+                blob_name = storage_url_parts[1]  # This is {userId}/{filename}
+            else:
+                # Fallback: assume it's in the default container
+                container_name = None
+                blob_name = media_asset.storage_url
+            
             # Fetch media from Azure Storage
-            media_data = storage_service.get_blob(media_asset.storage_url)
+            media_data = storage_service.get_blob(blob_name, container_name=container_name)
             if media_data:
                 media_type = media_asset.mime_type
             else:

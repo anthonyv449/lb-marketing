@@ -9,6 +9,7 @@ from ..db import get_db
 from .. import models, schemas
 from ..auth import get_current_user
 from ..services.storage import storage_service
+from ..config import settings
 
 router = APIRouter(prefix="/assets", tags=["assets"])
 
@@ -30,7 +31,8 @@ async def upload_media(
 ):
     """
     Upload media file to Azure Storage and create a MediaAsset record.
-    Files are stored under: user_media_assets/{userId}/{filename}
+    Files are stored in the user media container under folders organized by user ID.
+    Format: {container_name}/{userId}/{filename}
     """
     # Validate file type
     if file.content_type not in ALLOWED_MIME_TYPES:
@@ -72,7 +74,8 @@ async def upload_media(
     # Generate unique filename to avoid collisions
     # Use UUID + original extension
     unique_filename = f"{uuid.uuid4()}{file_ext}"
-    blob_name = f"user_media_assets/{current_user.id}/{unique_filename}"
+    # Store in folder organized by user ID: {userId}/{filename}
+    blob_name = f"{current_user.id}/{unique_filename}"
     
     # Upload to Azure Storage
     if not storage_service.blob_service_client:
@@ -81,11 +84,15 @@ async def upload_media(
             detail="Azure Storage is not configured"
         )
     
-    # Upload the file
+    # Get the user media container name from config
+    user_media_container = settings.AZURE_STORAGE_USER_MEDIA_CONTAINER_NAME
+    
+    # Upload the file to user media container (organized by user ID folders)
     upload_success = storage_service.upload_blob(
         blob_name=blob_name,
         data=file_content,
-        content_type=file.content_type
+        content_type=file.content_type,
+        container_name=user_media_container
     )
     
     if not upload_success:
@@ -94,9 +101,9 @@ async def upload_media(
             detail="Failed to upload file to Azure Storage"
         )
     
-    # Get the storage URL (construct from blob name)
-    # For now, we'll store the blob path. In production, you might want to generate a full URL
-    storage_url = blob_name
+    # Get the storage URL (construct from blob name with container prefix)
+    # Store as: {container_name}/{userId}/{filename} for retrieval
+    storage_url = f"{user_media_container}/{blob_name}"
     
     # Create MediaAsset record
     media_asset = models.MediaAsset(

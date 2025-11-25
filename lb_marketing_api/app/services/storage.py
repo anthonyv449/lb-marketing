@@ -1,5 +1,5 @@
 """
-Azure Blob Storage service for managing PDF files
+Azure Blob Storage service for managing PDF files and user media assets
 """
 import logging
 from typing import Optional
@@ -17,6 +17,7 @@ class StorageService:
         self.account_name = settings.AZURE_STORAGE_ACCOUNT_NAME
         self.account_key = settings.AZURE_STORAGE_ACCOUNT_KEY
         self.container_name = settings.AZURE_STORAGE_CONTAINER_NAME
+        self.user_media_container_name = settings.AZURE_STORAGE_USER_MEDIA_CONTAINER_NAME
         
         if not self.connection_string and not (self.account_name and self.account_key):
             logger.warning(
@@ -42,27 +43,30 @@ class StorageService:
                 logger.error(f"Failed to initialize Azure Storage client: {e}")
                 self.blob_service_client = None
     
-    def _ensure_container_exists(self):
+    def _ensure_container_exists(self, container_name: Optional[str] = None):
         """Create container if it doesn't exist"""
         if not self.blob_service_client:
             return
         
+        container = container_name or self.container_name
+        
         try:
             container_client = self.blob_service_client.get_container_client(
-                self.container_name
+                container
             )
             if not container_client.exists():
                 container_client.create_container()
-                logger.info(f"Created container: {self.container_name}")
+                logger.info(f"Created container: {container}")
         except Exception as e:
             logger.error(f"Failed to ensure container exists: {e}")
     
-    def get_blob(self, blob_name: str) -> Optional[bytes]:
+    def get_blob(self, blob_name: str, container_name: Optional[str] = None) -> Optional[bytes]:
         """
         Download a blob from Azure Storage
         
         Args:
             blob_name: Name of the blob to download
+            container_name: Optional container name (defaults to configured container)
             
         Returns:
             Blob content as bytes, or None if not found or error
@@ -71,9 +75,11 @@ class StorageService:
             logger.error("Azure Storage client not initialized")
             return None
         
+        container = container_name or self.container_name
+        
         try:
             blob_client = self.blob_service_client.get_blob_client(
-                container=self.container_name,
+                container=container,
                 blob=blob_name
             )
             
@@ -105,7 +111,7 @@ class StorageService:
             logger.error(traceback.format_exc())
             return None
     
-    def upload_blob(self, blob_name: str, data: bytes, content_type: str = "application/pdf") -> bool:
+    def upload_blob(self, blob_name: str, data: bytes, content_type: str = "application/pdf", container_name: Optional[str] = None) -> bool:
         """
         Upload a blob to Azure Storage
         
@@ -113,6 +119,7 @@ class StorageService:
             blob_name: Name of the blob
             data: Content to upload as bytes
             content_type: MIME type of the content
+            container_name: Optional container name (defaults to configured container)
             
         Returns:
             True if successful, False otherwise
@@ -121,9 +128,15 @@ class StorageService:
             logger.error("Azure Storage client not initialized")
             return False
         
+        container = container_name or self.container_name
+        
+        # Ensure container exists if it's different from the default
+        if container != self.container_name:
+            self._ensure_container_exists(container)
+        
         try:
             blob_client = self.blob_service_client.get_blob_client(
-                container=self.container_name,
+                container=container,
                 blob=blob_name
             )
             content_settings = ContentSettings(content_type=content_type)
@@ -138,14 +151,16 @@ class StorageService:
             logger.error(f"Failed to upload blob {blob_name}: {e}")
             return False
     
-    def blob_exists(self, blob_name: str) -> bool:
+    def blob_exists(self, blob_name: str, container_name: Optional[str] = None) -> bool:
         """Check if a blob exists"""
         if not self.blob_service_client:
             return False
         
+        container = container_name or self.container_name
+        
         try:
             blob_client = self.blob_service_client.get_blob_client(
-                container=self.container_name,
+                container=container,
                 blob=blob_name
             )
             return blob_client.exists()
