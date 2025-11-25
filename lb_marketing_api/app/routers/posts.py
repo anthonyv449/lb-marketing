@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 
+from lb_marketing_api.app.main import logger
+
 from ..db import get_db
 from .. import models, schemas
 from ..auth import get_current_user
@@ -114,6 +116,8 @@ def publish_posts_batch(post_ids: List[int], db: Session) -> List[schemas.Schedu
             errors.append(f"Post {post_id}: {str(e)}")
             # Mark post as failed
             post.status = models.PostStatus.failed
+            # add logger line to print out the error
+            logger.error(f"Error publishing post {post_id}: {str(e)}")
             db.commit()
     
     if not published_posts:

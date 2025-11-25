@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 import io
 
 from .. import models
-from ..services.storage import storage_service
+from ..services.storage import logger, storage_service
 from ..config import settings
 
 
@@ -333,6 +333,8 @@ def post_scheduled_post(
             
             # Fetch media from Azure Storage
             media_data = storage_service.get_blob(blob_name, container_name=container_name)
+            # add logger line to print out media_data
+            logger.info(f"Media data: {media_data}")
             if media_data:
                 media_type = media_asset.mime_type
             else:
@@ -370,5 +372,7 @@ def post_scheduled_post(
         db.commit()
         db.refresh(scheduled_post)
         # Re-raise with the exception message
+        # add logger line to print out the error
+        logger.error(f"Error posting scheduled post {scheduled_post.id}: {str(e)}")
         raise PlatformPostError(str(e)) from e
 
