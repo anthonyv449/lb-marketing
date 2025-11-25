@@ -71,7 +71,9 @@ def validate_x_token(access_token: str) -> Tuple[bool, Optional[str]]:
 
 def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> str:
     """
-    Upload media to X (Twitter) using API v2 and return the media_id.
+    Upload media to X (Twitter) using API v1.1 upload endpoint.
+    Note: X API v2 doesn't have a media upload endpoint, so we use v1.1 for uploads
+    but the media_id can be used with v2 tweet creation.
     
     Args:
         media_data: The media file as bytes
@@ -85,8 +87,9 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
         PlatformPostError: If upload fails
     """
     try:
-        # X (Twitter) API v2 media upload endpoint
-        upload_url = "https://api.x.com/2/media/upload"
+        # X (Twitter) API v1.1 media upload endpoint
+        # Note: Media uploads use v1.1 API, but media_id works with v2 tweets
+        upload_url = "https://upload.twitter.com/1.1/media/upload.json"
         
         headers = {
             "Authorization": f"Bearer {access_token}"
@@ -108,9 +111,11 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
             error_messages = [str(err) for err in error_details]
             raise PlatformPostError(f"X API returned errors: {', '.join(error_messages)}")
         
-        # Extract media_id from response (X API v2 returns data.id)
-        if "data" in result and "id" in result["data"]:
-            return str(result["data"]["id"])
+        # Extract media_id from response (v1.1 API returns media_id_string or media_id)
+        if "media_id_string" in result:
+            return result["media_id_string"]
+        elif "media_id" in result:
+            return str(result["media_id"])
         else:
             raise PlatformPostError(f"Unexpected media upload response format: {result}")
             
