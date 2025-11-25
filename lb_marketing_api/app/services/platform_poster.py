@@ -155,8 +155,17 @@ def upload_media_to_x(media_data: bytes, media_type: str, access_token: str) -> 
                 else:
                     error_msg += f" - {error_detail}"
             except Exception:
-                logger.error(f"Error uploading media to X - HTTP {status_code}, unable to parse response")
-                error_msg += f" - Status: {e.response.status_code}"
+                # Try to get raw response text if JSON parsing fails
+                try:
+                    response_text = e.response.text[:500]  # Limit length for logging
+                    logger.error(f"Error uploading media to X - HTTP {status_code}, unable to parse JSON response. Raw response: {response_text}")
+                    if response_text:
+                        error_msg += f" - Response: {response_text}"
+                    else:
+                        error_msg += f" - Status: {status_code} (empty response)"
+                except Exception as text_exc:
+                    logger.error(f"Error uploading media to X - HTTP {status_code}, unable to parse response or get response text: {str(text_exc)}")
+                    error_msg += f" - Status: {status_code}"
         else:
             logger.error(f"Error uploading media to X (no response): {str(e)}")
         raise PlatformPostError(error_msg) from e
@@ -295,12 +304,15 @@ def post_to_x(
             except Exception:
                 # If we can't parse JSON, include the raw response text if available
                 try:
-                    response_text = e.response.text[:200]  # Limit length
-                    logger.error(f"Error posting tweet to X - HTTP {status_code}, response text: {response_text}, content attempted: {content[:100]}...")
+                    response_text = e.response.text[:500]  # Limit length
+                    logger.error(f"Error posting tweet to X - HTTP {status_code}, unable to parse JSON response. Raw response: {response_text}, content attempted: {content[:100]}...")
                     if response_text:
                         error_msg += f" - Response: {response_text}"
-                except Exception:
-                    logger.error(f"Error posting tweet to X - HTTP {status_code}, unable to parse response, content attempted: {content[:100]}...")
+                    else:
+                        error_msg += f" - Status: {status_code} (empty response)"
+                except Exception as text_exc:
+                    logger.error(f"Error posting tweet to X - HTTP {status_code}, unable to parse response or get response text: {str(text_exc)}, content attempted: {content[:100]}...")
+                    error_msg += f" - Status: {status_code}"
         else:
             logger.error(f"Error posting tweet to X (no response): {str(e)}, content attempted: {content[:100]}...")
         
