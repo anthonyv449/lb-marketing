@@ -1,12 +1,13 @@
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 
-from lb_marketing_api.app.main import logger
-
 from ..db import get_db
+
+logger = logging.getLogger(__name__)
 from .. import models, schemas
 from ..auth import get_current_user
 from ..services.platform_poster import post_scheduled_post, PlatformPostError
