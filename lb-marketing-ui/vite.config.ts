@@ -88,8 +88,14 @@ export default defineConfig({
           "react-vendor": ["react", "react-dom"],
           "ui-vendor": ["lucide-react"],
         },
+        // Ensure JS files have .js extension for proper MIME type detection
+        entryFileNames: "assets/[name].[hash].js",
+        chunkFileNames: "assets/[name].[hash].js",
+        assetFileNames: "assets/[name].[hash].[ext]",
       },
     },
+    // Copy staticwebapp.config.json to dist
+    copyPublicDir: true,
   },
   // Preview server configuration (for testing production builds locally)
   preview: {
