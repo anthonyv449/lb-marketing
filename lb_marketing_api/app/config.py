@@ -41,6 +41,15 @@ class Settings(BaseSettings):
     # In production, this should be your actual domain
     TWITTER_REDIRECT_URI: str = "http://localhost:8000/oauth/x/callback"
     TWITTER_BEARER_TOKEN: str = ""
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    # Azure Storage Account configuration
+    # In Azure, these can be set via App Settings or use the connection string
+    AZURE_STORAGE_CONNECTION_STRING: str = ""
+    AZURE_STORAGE_ACCOUNT_NAME: str = ""
+    AZURE_STORAGE_ACCOUNT_KEY: str = ""
+    AZURE_STORAGE_CONTAINER_NAME: str = ""  # Default container name for PDFs
+    AZURE_STORAGE_USER_MEDIA_CONTAINER_NAME: str = ""  # Container name for user media assets
 
     @property
     def database_url(self) -> str:
