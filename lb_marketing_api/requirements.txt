@@ -14,3 +14,4 @@ python-multipart==0.0.9
 debugpy==1.8.11
 alembic==1.13.2
 azure-functions>=1.18.0
+azure-storage-blob==12.19.0

@@ -39,20 +39,17 @@ export const apiFetch = async (
   // Get auth token using auth utility
   const token = getAuthToken();
 
-  const defaultHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+  const defaultHeaders: HeadersInit = {};
+
+  // Set default Content-Type to application/json only if not already specified
+  // This allows callers to override it (e.g., for PDF downloads)
+  if (!options.headers || !("Content-Type" in options.headers)) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
 
   // Add authorization header if token exists
   if (token) {
     defaultHeaders["Authorization"] = `Bearer ${token.toString()}`;
-    // Debug logging (remove in production)
-    if (endpoint.includes("/oauth")) {
-      console.log(
-        "DEBUG: apiFetch - Adding Authorization header for",
-        endpoint
-      );
-    }
   } else {
     console.warn("DEBUG: apiFetch - No token found for request to", endpoint);
   }
@@ -64,7 +61,6 @@ export const apiFetch = async (
       ...options.headers,
     },
   };
-  console.log({ url, config });
   return fetch(url, config);
 };
 
@@ -103,7 +99,6 @@ export const api = {
       throw new Error("Not authenticated. Please log in first.");
     }
 
-    console.log("DEBUG: Attempting to authorize X, token exists:", !!token);
     const response = await apiFetch("/oauth/x/authorize?return_url=true");
 
     if (!response.ok) {
@@ -189,4 +184,64 @@ export const api = {
     apiFetch("/admin/migrate", {
       method: "POST",
     }),
+
+  // PDF downloads
+  downloadBusinessPlan: async () => {
+    // Using response.blob() handles binary data (equivalent to responseType: 'blob' in axios)
+    const response = await apiFetch("/pdfs/download/business", {
+      headers: {
+        "Content-Type": "application/pdf",
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = "Failed to download PDF";
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorMessage;
+      } catch {
+        errorMessage = errorText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const blob = await response.blob();
+    console.log({ blob });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "30-day-plan-boost-engagement-business.pdf";
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  downloadAffiliatePlan: async () => {
+    // Using response.blob() handles binary data (equivalent to responseType: 'blob' in axios)
+    const response = await apiFetch("/pdfs/download/affiliate", {
+      headers: {
+        Accept: "application/pdf", // Indicate that we expect a PDF response
+      },
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = "Failed to download PDF";
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorMessage;
+      } catch {
+        errorMessage = errorText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "30-day-plan-boost-engagement-affiliate.pdf";
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
 };
