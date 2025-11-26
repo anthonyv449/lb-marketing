@@ -43,6 +43,18 @@ class Settings(BaseSettings):
     TWITTER_BEARER_TOKEN: str = ""
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # Facebook/Instagram Graph API configuration
+    # Facebook App ID for Instagram Graph API access
+    FACEBOOK_APP_ID: str = ""
+    # Facebook App Secret for OAuth token exchange
+    FACEBOOK_APP_SECRET: str = ""
+    # Instagram Graph API version (e.g., "v21.0")
+    # Defaults to v21.0 if not specified
+    IG_GRAPH_API_VERSION: str = "v21.0"
+    # Redirect URI for Facebook OAuth callback
+    # In production, this should be your actual domain
+    FACEBOOK_REDIRECT_URI: str = "http://localhost:8000/oauth/instagram/callback"
+
     # Azure Storage Account configuration
     # In Azure, these can be set via App Settings or use the connection string
     AZURE_STORAGE_CONNECTION_STRING: str = ""

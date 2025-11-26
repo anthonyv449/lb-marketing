@@ -109,6 +109,7 @@ Required in Function App → **Configuration** → **Application settings**:
 - ✅ `JWT_SECRET_KEY` - Strong random secret
 - ⚠️ `CORS_ORIGINS` - Frontend URLs (comma-separated, optional)
 - ⚠️ Twitter OAuth credentials (if using)
+- ⚠️ Facebook/Instagram OAuth credentials (if using): `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `IG_GRAPH_API_VERSION`, `FACEBOOK_REDIRECT_URI`
 
 ## Common Commands
 

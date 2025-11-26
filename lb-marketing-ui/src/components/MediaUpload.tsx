@@ -17,12 +17,7 @@ export default function MediaUpload({
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type
-      const validTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-      ];
+      const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
       if (!validTypes.includes(file.type)) {
         onError(
           "Invalid file type. Please upload JPEG, PNG, GIF, or WEBP only."
@@ -57,4 +52,3 @@ export default function MediaUpload({
     </div>
   );
 }
-

@@ -523,6 +523,297 @@ def tiktok_status(
             "handle": None
         }
 
+def _build_instagram_authorization_url(current_user: models.User, db: Session) -> str:
+    """
+    Helper function to build Instagram (Facebook) authorization URL.
+    Returns the authorization URL string.
+    """
+    if not settings.FACEBOOK_APP_ID or not settings.FACEBOOK_APP_SECRET:
+        raise HTTPException(500, "Facebook/Instagram OAuth credentials not configured")
+    
+    # Generate state for CSRF protection
+    state = secrets.token_urlsafe(32)
+    
+    # Store state in database with 10 minute expiration
+    oauth_state = models.OAuthState(
+        state=state,
+        user_id=current_user.id,
+        code_verifier=None,  # Facebook OAuth doesn't use PKCE
+        platform="instagram",
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.add(oauth_state)
+    db.commit()
+    
+    # Build authorization URL
+    # Facebook OAuth for Instagram requires specific scopes
+    api_version = settings.IG_GRAPH_API_VERSION or "v21.0"
+    auth_params = {
+        "client_id": settings.FACEBOOK_APP_ID,
+        "redirect_uri": settings.FACEBOOK_REDIRECT_URI,
+        "scope": "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+        "response_type": "code",
+        "state": state
+    }
+    
+    auth_url = f"https://www.facebook.com/{api_version}/dialog/oauth?{urlencode(auth_params)}"
+    return auth_url
+
+@router.get("/instagram/authorize")
+def authorize_instagram(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    return_url: bool = Query(False, description="Return URL as JSON instead of redirecting")
+):
+    """
+    Initiate Instagram (Facebook) OAuth 2.0 authorization flow.
+    By default, redirects user to Facebook's authorization page.
+    If return_url=true, returns the authorization URL as JSON.
+    """
+    auth_url = _build_instagram_authorization_url(current_user, db)
+    
+    if return_url:
+        return {"authorization_url": auth_url}
+    
+    return RedirectResponse(url=auth_url)
+
+@router.get("/instagram/callback")
+def instagram_callback(
+    code: str = Query(None, description="Authorization code from Facebook"),
+    state: str = Query(None, description="State parameter for CSRF protection"),
+    error: str = Query(None, description="Error from Facebook OAuth"),
+    error_description: str = Query(None, description="Error description from Facebook OAuth"),
+    db: Session = Depends(get_db)
+):
+    """
+    Handle OAuth callback from Facebook for Instagram.
+    Exchanges authorization code for access token, gets Instagram Business Account ID,
+    and stores it in SocialProfile.
+    """
+    # Handle OAuth errors (user denied, etc.)
+    if error:
+        error_msg = error_description or error
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': error_msg})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    # Validate required parameters
+    if not code or not state:
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'Missing authorization code or state parameter'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    # Verify state from database
+    oauth_state = db.query(models.OAuthState).filter(
+        models.OAuthState.state == state,
+        models.OAuthState.platform == "instagram"
+    ).first()
+    
+    if not oauth_state:
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'Invalid state parameter'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    # Check if state has expired
+    if oauth_state.expires_at < datetime.utcnow():
+        db.delete(oauth_state)
+        db.commit()
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'OAuth state has expired. Please try again.'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    user_id = oauth_state.user_id
+    
+    # Delete state after use (one-time use)
+    db.delete(oauth_state)
+    db.commit()
+    
+    # Get user
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'User not found'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    if not settings.FACEBOOK_APP_ID or not settings.FACEBOOK_APP_SECRET:
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': 'Facebook/Instagram OAuth credentials not configured'})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    
+    api_version = settings.IG_GRAPH_API_VERSION or "v21.0"
+    
+    try:
+        # Step 1: Exchange code for short-lived access token
+        token_url = f"https://graph.facebook.com/{api_version}/oauth/access_token"
+        token_params = {
+            "client_id": settings.FACEBOOK_APP_ID,
+            "client_secret": settings.FACEBOOK_APP_SECRET,
+            "redirect_uri": settings.FACEBOOK_REDIRECT_URI,
+            "code": code
+        }
+        
+        token_response = requests.get(token_url, params=token_params, timeout=30)
+        token_response.raise_for_status()
+        token_data = token_response.json()
+        
+        short_lived_token = token_data.get("access_token")
+        if not short_lived_token:
+            frontend_url = settings.FRONTEND_URL.rstrip('/')
+            error_encoded = urlencode({'error': 'Failed to obtain access token from Facebook'})
+            return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+        
+        # Step 2: Exchange short-lived token for long-lived token (60 days)
+        long_token_url = f"https://graph.facebook.com/{api_version}/oauth/access_token"
+        long_token_params = {
+            "grant_type": "fb_exchange_token",
+            "client_id": settings.FACEBOOK_APP_ID,
+            "client_secret": settings.FACEBOOK_APP_SECRET,
+            "fb_exchange_token": short_lived_token
+        }
+        
+        long_token_response = requests.get(long_token_url, params=long_token_params, timeout=30)
+        long_token_response.raise_for_status()
+        long_token_data = long_token_response.json()
+        
+        long_lived_token = long_token_data.get("access_token")
+        if not long_lived_token:
+            # Fallback to short-lived token if exchange fails
+            long_lived_token = short_lived_token
+        
+        # Step 3: Get user's Facebook Pages
+        pages_url = f"https://graph.facebook.com/{api_version}/me/accounts"
+        pages_params = {
+            "access_token": long_lived_token,
+            "fields": "id,name,instagram_business_account"
+        }
+        
+        pages_response = requests.get(pages_url, params=pages_params, timeout=30)
+        pages_response.raise_for_status()
+        pages_data = pages_response.json()
+        
+        # Find page with Instagram Business Account
+        ig_account_id = None
+        page_id = None
+        handle = "unknown"
+        
+        if "data" in pages_data and len(pages_data["data"]) > 0:
+            # Use the first page that has an Instagram Business Account
+            for page in pages_data["data"]:
+                if "instagram_business_account" in page:
+                    page_id = page.get("id")
+                    ig_account_info = page.get("instagram_business_account")
+                    if isinstance(ig_account_info, dict):
+                        ig_account_id = ig_account_info.get("id")
+                    else:
+                        ig_account_id = ig_account_info
+                    break
+        
+        if not ig_account_id:
+            frontend_url = settings.FRONTEND_URL.rstrip('/')
+            error_encoded = urlencode({
+                'error': 'No Instagram Business Account found. Please ensure your Instagram account is linked to a Facebook Page.'
+            })
+            return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+        
+        # Step 4: Get Instagram account details
+        ig_account_url = f"https://graph.facebook.com/{api_version}/{ig_account_id}"
+        ig_account_params = {
+            "access_token": long_lived_token,
+            "fields": "username,id"
+        }
+        
+        ig_account_response = requests.get(ig_account_url, params=ig_account_params, timeout=30)
+        if ig_account_response.status_code == 200:
+            ig_account_data = ig_account_response.json()
+            handle = ig_account_data.get("username", "unknown")
+        
+        # Step 5: Get or create business for user (optional)
+        business = db.query(models.Business).filter(models.Business.user_id == user_id).first()
+        business_id = business.id if business else None
+        
+        # Step 6: Check if social profile already exists for this user and platform
+        existing_profile = db.query(models.SocialProfile).filter(
+            models.SocialProfile.user_id == user_id,
+            models.SocialProfile.platform == models.PlatformEnum.instagram
+        ).first()
+        
+        if existing_profile:
+            # Update existing profile
+            existing_profile.access_token = long_lived_token
+            existing_profile.handle = handle
+            existing_profile.external_id = ig_account_id
+            existing_profile.status = "connected"
+            if business_id:
+                existing_profile.business_id = business_id
+        else:
+            # Create new social profile
+            profile_data = {
+                "user_id": user_id,
+                "platform": models.PlatformEnum.instagram,
+                "handle": handle,
+                "external_id": ig_account_id,
+                "access_token": long_lived_token,
+                "status": "connected"
+            }
+            if business_id:
+                profile_data["business_id"] = business_id
+            new_profile = models.SocialProfile(**profile_data)
+            db.add(new_profile)
+        
+        db.commit()
+        
+        # Redirect to frontend with success indicator
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        return RedirectResponse(url=f"{frontend_url}?oauth=success&platform=instagram")
+        
+    except requests.RequestException as e:
+        db.rollback()
+        error_msg = f"Failed to exchange token: {str(e)}"
+        # Try to get more details from response
+        if hasattr(e, 'response') and e.response is not None:
+            try:
+                error_data = e.response.json()
+                if "error" in error_data:
+                    error_msg = error_data["error"].get("message", error_msg)
+            except Exception:
+                pass
+        # Redirect to frontend with error indicator
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': error_msg})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Error processing OAuth callback: {str(e)}"
+        # Redirect to frontend with error indicator
+        frontend_url = settings.FRONTEND_URL.rstrip('/')
+        error_encoded = urlencode({'error': error_msg})
+        return RedirectResponse(url=f"{frontend_url}?oauth=error&{error_encoded}")
+
+@router.get("/instagram/status")
+def instagram_status(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Check if Instagram is connected for the current user.
+    Returns connection status and handle if connected.
+    """
+    profile = db.query(models.SocialProfile).filter(
+        models.SocialProfile.user_id == current_user.id,
+        models.SocialProfile.platform == models.PlatformEnum.instagram
+    ).first()
+    
+    if profile and profile.status == "connected" and profile.access_token:
+        return {
+            "connected": True,
+            "handle": profile.handle
+        }
+    else:
+        return {
+            "connected": False,
+            "handle": None
+        }
+
 @router.get("/status")
 def get_all_platform_status(
     current_user: models.User = Depends(get_current_user),
@@ -610,13 +901,15 @@ def authorize_platform(
     return_url: bool = Query(False, description="Return URL as JSON instead of redirecting")
 ):
     """
-    Generic authorize endpoint. Currently supports 'x' and 'tiktok' platforms.
+    Generic authorize endpoint. Currently supports 'x', 'tiktok', and 'instagram' platforms.
     Other platforms will return a not implemented error.
     """
     if platform == "x":
         return authorize_x(current_user, db, return_url)
     elif platform == "tiktok":
         return authorize_tiktok(current_user, db, return_url)
+    elif platform == "instagram":
+        return authorize_instagram(current_user, db, return_url)
     else:
         raise HTTPException(501, f"OAuth for platform '{platform}' is not yet implemented")
 
@@ -637,6 +930,14 @@ def platform_status(
     except ValueError as e:
         error_msg = f"Invalid platform: {platform} - {str(e)}"
         raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Use platform-specific status endpoints if available
+    if platform == "x":
+        return x_status(current_user, db)
+    elif platform == "tiktok":
+        return tiktok_status(current_user, db)
+    elif platform == "instagram":
+        return instagram_status(current_user, db)
     
     profile = db.query(models.SocialProfile).filter(
         models.SocialProfile.user_id == current_user.id,

@@ -89,6 +89,10 @@ This guide walks you through deploying the LB Marketing API to Azure Functions w
 | `TWITTER_CLIENT_SECRET` | `<your-twitter-client-secret>` | Twitter OAuth secret (if using) |
 | `TWITTER_REDIRECT_URI` | `https://<your-function-app>.azurewebsites.net/oauth/x/callback` | OAuth callback URL |
 | `TWITTER_BEARER_TOKEN` | `<your-twitter-bearer-token>` | Twitter API bearer token (if using) |
+| `FACEBOOK_APP_ID` | `<your-facebook-app-id>` | Facebook App ID for Instagram Graph API (if using) |
+| `FACEBOOK_APP_SECRET` | `<your-facebook-app-secret>` | Facebook App Secret for OAuth token exchange (if using) |
+| `IG_GRAPH_API_VERSION` | `v21.0` | Instagram Graph API version (default: v21.0) |
+| `FACEBOOK_REDIRECT_URI` | `https://<your-function-app>.azurewebsites.net/oauth/instagram/callback` | Facebook OAuth callback URL for Instagram (if using) |
 
 4. Click **Save** to apply changes
 
