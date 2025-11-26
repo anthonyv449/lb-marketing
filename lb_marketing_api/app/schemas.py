@@ -1,8 +1,9 @@
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
+from .models import PayoutType
 
 def serialize_datetime_utc(dt: datetime) -> str:
     """Serialize datetime to ISO format with UTC timezone indicator ('Z' suffix)."""
@@ -206,3 +207,61 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+class AffiliateLinkCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    merchant: Optional[str] = None
+    affiliate_program: Optional[str] = None
+    url: str
+    image_url: Optional[str] = None
+    payout_type: PayoutType
+    commission_rate: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_active: bool = True
+    seo_keywords: Optional[str] = None
+    estimated_conversion_rate: Optional[float] = None
+    preferred: bool = False
+
+class AffiliateLinkUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    merchant: Optional[str] = None
+    affiliate_program: Optional[str] = None
+    url: Optional[str] = None
+    image_url: Optional[str] = None
+    payout_type: Optional[PayoutType] = None
+    commission_rate: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+    seo_keywords: Optional[str] = None
+    estimated_conversion_rate: Optional[float] = None
+    preferred: Optional[bool] = None
+
+class AffiliateLinkOut(BaseModel):
+    id: int
+    title: str
+    description: Optional[str] = None
+    category: Optional[str] = None
+    merchant: Optional[str] = None
+    affiliate_program: Optional[str] = None
+    url: str
+    image_url: Optional[str] = None
+    payout_type: PayoutType
+    commission_rate: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_active: bool
+    created_by: int
+    seo_keywords: Optional[str] = None
+    estimated_conversion_rate: Optional[float] = None
+    preferred: bool
+    created_at: datetime
+    
+    @field_serializer('created_at')
+    def serialize_created_at(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+    
+    class Config:
+        from_attributes = True

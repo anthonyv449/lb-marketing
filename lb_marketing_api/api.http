@@ -2,7 +2,7 @@
 ### Use this file with REST Client extension in VS Code
 ### Variables - Update these as needed
 @baseUrl = http://localhost:8000
-@token = your-jwt-token-here
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzY0NzM0NTQwfQ.ZpYxhZ_5jYfW_65UvyCTfsxbanahB2smpr7ziaNGumE
 
 ###############################################
 # Health & Utility Endpoints
@@ -293,6 +293,113 @@ Content-Type: application/json
   "campaign_id": 1,
   "media_asset_id": 1
 }
+
+###############################################
+# Affiliate Links Endpoints
+###############################################
+
+### List All Affiliate Links
+GET {{baseUrl}}/affiliate-links
+Authorization: Bearer {{token}}
+
+### List Active Affiliate Links Only
+GET {{baseUrl}}/affiliate-links?is_active=true
+Authorization: Bearer {{token}}
+
+### List Preferred Affiliate Links Only
+GET {{baseUrl}}/affiliate-links?preferred=true
+Authorization: Bearer {{token}}
+
+### List Affiliate Links by Category
+GET {{baseUrl}}/affiliate-links?category=fitness
+Authorization: Bearer {{token}}
+
+### List Affiliate Links with Multiple Filters
+GET {{baseUrl}}/affiliate-links?is_active=true&preferred=true&category=tech
+Authorization: Bearer {{token}}
+
+### Get Affiliate Link by ID
+GET {{baseUrl}}/affiliate-links/1
+Authorization: Bearer {{token}}
+
+### Create Affiliate Link
+POST {{baseUrl}}/affiliate-links
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Nike Pegasus 41 Running Shoes",
+  "description": "Premium running shoes with advanced cushioning technology",
+  "category": "fitness",
+  "merchant": "Nike",
+  "affiliate_program": "Amazon Associates",
+  "url": "https://amazon.com/nike-pegasus-41",
+  "image_url": "https://example.com/images/nike-pegasus-41.jpg",
+  "payout_type": "rev-share",
+  "commission_rate": "8%",
+  "tags": ["running", "shoes", "fitness", "athletic"],
+  "is_active": true,
+  "seo_keywords": "running shoes, nike pegasus, athletic footwear",
+  "estimated_conversion_rate": 0.0234,
+  "preferred": false
+}
+
+### Create Affiliate Link (Minimal - Only Required Fields)
+POST {{baseUrl}}/affiliate-links
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Skillshare Premium Membership",
+  "url": "https://skillshare.com/premium",
+  "payout_type": "CPA"
+}
+
+### Update Affiliate Link (Full Update - PUT)
+PUT {{baseUrl}}/affiliate-links/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Nike Pegasus 41 Running Shoes - Updated",
+  "description": "Updated description with new features",
+  "category": "fitness",
+  "merchant": "Nike",
+  "affiliate_program": "Amazon Associates",
+  "url": "https://amazon.com/nike-pegasus-41-v2",
+  "image_url": "https://example.com/images/nike-pegasus-41-v2.jpg",
+  "payout_type": "rev-share",
+  "commission_rate": "10%",
+  "tags": ["running", "shoes", "fitness", "athletic", "premium"],
+  "is_active": true,
+  "seo_keywords": "running shoes, nike pegasus, athletic footwear, premium",
+  "estimated_conversion_rate": 0.0250,
+  "preferred": true
+}
+
+### Partial Update Affiliate Link (PATCH - Update Only Some Fields)
+PATCH {{baseUrl}}/affiliate-links/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "is_active": false,
+  "preferred": true,
+  "estimated_conversion_rate": 0.0300
+}
+
+### Partial Update - Update Tags Only
+PATCH {{baseUrl}}/affiliate-links/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "tags": ["running", "shoes", "fitness", "athletic", "premium", "new-arrival"]
+}
+
+### Delete Affiliate Link
+DELETE {{baseUrl}}/affiliate-links/1
+Authorization: Bearer {{token}}
 
 ###############################################
 # PDF Download Endpoints

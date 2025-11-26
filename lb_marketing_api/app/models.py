@@ -2,8 +2,9 @@
 from datetime import datetime
 from enum import Enum
 from sqlalchemy import (
-    Column, Integer, String, DateTime, ForeignKey, Text, Enum as SAEnum, UniqueConstraint
+    Column, Integer, String, DateTime, ForeignKey, Text, Enum as SAEnum, UniqueConstraint, Numeric
 )
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from passlib.hash import argon2
 
@@ -25,6 +26,13 @@ class PostStatus(str, Enum):
     failed = "failed"
     canceled = "canceled"
 
+class PayoutType(str, Enum):
+    cpc = "CPC" # pay per click
+    cpa = "CPA" # pay per sale
+    rev_share = "rev-share" # revenue share
+    percent = "%" # percentage of sale
+    fixed = "fixed" # fixed amount
+
 class User(Base):
     __tablename__ = "users"
 
@@ -38,6 +46,7 @@ class User(Base):
     social_profiles = relationship("SocialProfile", back_populates="user", cascade="all, delete-orphan")
     businesses = relationship("Business", back_populates="user", cascade="all, delete-orphan")
     scheduled_posts = relationship("ScheduledPost", back_populates="user", cascade="all, delete-orphan")
+    affiliate_links = relationship("AffiliateLink", back_populates="created_by_user", cascade="all, delete-orphan")
 
     def set_password(self, password: str):
         self.password_hash = pwd_context.hash(password)
@@ -86,7 +95,7 @@ class SocialProfile(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"))
+    business_id: Mapped[int] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"),nullable=True)
     platform: Mapped[PlatformEnum] = mapped_column(SAEnum(PlatformEnum), nullable=False)
     handle: Mapped[str] = mapped_column(String(255), nullable=False)
     external_id: Mapped[str | None] = mapped_column(String(255))
@@ -155,3 +164,28 @@ class OAuthState(Base):
     business_id: Mapped[int | None] = mapped_column(ForeignKey("businesses.id", ondelete="CASCADE"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)  # Expiration time (e.g., 10 minutes)
+
+class AffiliateLink(Base):
+    __tablename__ = "affiliate_links"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # product name that shows up in UI 
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[str | None] = mapped_column(String(100))  # "fitness", "tech", "software", etc.
+    merchant: Mapped[str | None] = mapped_column(String(255))  # Nike / Amazon / Skillshare / etc.
+    affiliate_program: Mapped[str | None] = mapped_column(String(255))  # Amazon Associates / Impact / etc.
+    url: Mapped[str] = mapped_column(Text, nullable=False)
+    # thumbnail for product
+    image_url: Mapped[str | None] = mapped_column(Text)
+    payout_type: Mapped[PayoutType] = mapped_column(SAEnum(PayoutType), nullable=False)
+    commission_rate: Mapped[str | None] = mapped_column(String(50))  # Can be percentage, fixed amount, etc.
+    tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), default=list)
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    seo_keywords: Mapped[str | None] = mapped_column(Text)
+    estimated_conversion_rate: Mapped[float | None] = mapped_column(Numeric(5, 4))  # e.g., 0.0234 for 2.34%
+    preferred: Mapped[bool] = mapped_column(default=False, nullable=False)  # To auto-surface high earners
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    created_by_user = relationship("User", back_populates="affiliate_links")
