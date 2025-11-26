@@ -15,7 +15,15 @@ import { Label } from "./components/ui/Label";
 import { ScrollArea } from "./components/ui/ScrollArea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/Tabs";
 import { Tooltip } from "./components/ui/tooltip";
-import { Music, CheckCircle2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./components/ui/dialog";
+import { Music, CheckCircle2, Download, Trash2 } from "lucide-react";
 import { api } from "./lib/api";
 import { getUser, isAuthenticated, clearAuth, type User } from "./lib/auth";
 import Login from "./components/Login";
@@ -55,6 +63,9 @@ export default function SimpleMarketingDashboard() {
   const [disconnecting, setDisconnecting] = useState<Record<string, boolean>>(
     {}
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
   // Helper function to convert local datetime to UTC ISO string
   const convertLocalToUTC = (localDateTimeString: string): string => {
@@ -335,6 +346,42 @@ export default function SimpleMarketingDashboard() {
     } finally {
       setPublishing(false);
     }
+  };
+
+  const handleDeleteClick = (post: Post) => {
+    setPostToDelete(post);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!postToDelete) return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await api.deletePost(postToDelete.id);
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      // Refresh posts list to remove deleted post
+      await fetchPosts();
+      setDeleteDialogOpen(false);
+      setPostToDelete(null);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete post";
+      setError(message);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setPostToDelete(null);
   };
 
   const handleGenerateText = async () => {
@@ -707,6 +754,9 @@ export default function SimpleMarketingDashboard() {
                     }
                   );
 
+                  const canDelete =
+                    post.status === "failed" || post.status === "scheduled";
+
                   return (
                     <Card key={post.id} className="shadow-sm border">
                       <CardHeader className="flex flex-row items-center gap-2">
@@ -719,25 +769,37 @@ export default function SimpleMarketingDashboard() {
                             Status: {post.status}
                           </span>
                         </div>
-                        <div className="text-right">
-                          {isPosted ? (
-                            <div className="flex flex-col">
-                              <span className="text-xs font-medium text-green-600">
-                                Posted
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {formattedDate}
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col">
-                              <span className="text-xs font-medium text-blue-600">
-                                Scheduled
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {formattedDate}
-                              </span>
-                            </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            {isPosted ? (
+                              <div className="flex flex-col">
+                                <span className="text-xs font-medium text-green-600">
+                                  Posted
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formattedDate}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col">
+                                <span className="text-xs font-medium text-blue-600">
+                                  Scheduled
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {formattedDate}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick(post)}
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           )}
                         </div>
                       </CardHeader>
@@ -765,44 +827,92 @@ export default function SimpleMarketingDashboard() {
         </TabsContent>
       </Tabs>
       {/* Bottom left buttons */}
-      <div className="flex gap-2 justify-start mt-auto">
-        <Button
-          variant="outline"
-          size="default"
-          onClick={async () => {
-            try {
-              await api.downloadBusinessPlan();
-            } catch (error) {
-              console.error("Failed to download PDF:", error);
-              alert(
-                error instanceof Error
-                  ? error.message
-                  : "Failed to download PDF. Please try again later."
-              );
-            }
-          }}
-        >
-          30 Day Plan To Boost Engagement for your Business
-        </Button>
-        <Button
-          variant="outline"
-          size="default"
-          onClick={async () => {
-            try {
-              await api.downloadAffiliatePlan();
-            } catch (error) {
-              console.error("Failed to download PDF:", error);
-              alert(
-                error instanceof Error
-                  ? error.message
-                  : "Failed to download PDF. Please try again later."
-              );
-            }
-          }}
-        >
-          30 Day Plan To Boost Engagement for your Affiliate Marketing Business
-        </Button>
+      <div className="flex flex-col gap-2 justify-start mt-auto">
+        <h2 className="text-lg font-semibold">Guides on how to post</h2>
+        <div className="overflow-x-auto">
+          <div className="flex gap-2 min-w-max pb-2">
+            <Button
+              variant="outline"
+              size="default"
+              onClick={async () => {
+                try {
+                  await api.downloadBusinessPlan();
+                } catch (error) {
+                  console.error("Failed to download PDF:", error);
+                  alert(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to download PDF. Please try again later."
+                  );
+                }
+              }}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              30 Day Plan To Boost Engagement for your Business
+            </Button>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={async () => {
+                try {
+                  await api.downloadAffiliatePlan();
+                } catch (error) {
+                  console.error("Failed to download PDF:", error);
+                  alert(
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to download PDF. Please try again later."
+                  );
+                }
+              }}
+              className="flex items-center gap-2 whitespace-nowrap"
+            >
+              <Download className="w-4 h-4" />
+              30 Day Plan To Boost Engagement for your Affiliate Marketing
+              Business
+            </Button>
+          </div>
+        </div>
       </div>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Post</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this post? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          {postToDelete && (
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground mb-2">
+                Post content:
+              </p>
+              <p className="text-sm border rounded p-2 bg-muted max-h-32 overflow-y-auto">
+                {postToDelete.content}
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDeleteCancel}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

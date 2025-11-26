@@ -79,6 +79,11 @@ export const api = {
 
   getPost: (id: number) => apiFetch(`/posts/${id}`),
 
+  deletePost: (id: number) =>
+    apiFetch(`/posts/${id}`, {
+      method: "DELETE",
+    }),
+
   // Media Assets
   uploadMedia: async (file: File) => {
     const formData = new FormData();

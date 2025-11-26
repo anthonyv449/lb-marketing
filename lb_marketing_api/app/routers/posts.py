@@ -46,6 +46,27 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, f"Post with id {post_id} not found")
     return post
 
+@router.delete("/{post_id}", status_code=204)
+def delete_post(
+    post_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a post by ID. Only the owner of the post can delete it.
+    """
+    post = db.get(models.ScheduledPost, post_id)
+    if not post:
+        raise HTTPException(404, f"Post with id {post_id} not found")
+    
+    # Verify the user owns the post
+    if post.user_id != current_user.id:
+        raise HTTPException(403, "You do not have permission to delete this post")
+    
+    db.delete(post)
+    db.commit()
+    return None
+
 @router.post("/publish", response_model=List[schemas.ScheduledPostOut])
 def publish_all_posts(db: Session = Depends(get_db)):
     """
