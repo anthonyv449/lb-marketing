@@ -66,6 +66,7 @@ export default function SimpleMarketingDashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [deleting, setDeleting] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("compose");
 
   // Helper function to convert local datetime to UTC ISO string
   const convertLocalToUTC = (localDateTimeString: string): string => {
@@ -199,7 +200,6 @@ export default function SimpleMarketingDashboard() {
     if (!user) return; // Only check if user is authenticated
 
     checkAllPlatformConnections();
-    fetchPosts();
 
     // Handle OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -252,6 +252,14 @@ export default function SimpleMarketingDashboard() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [platformConnections, checkingConnection, platform, user]);
+
+  // Fetch posts when user navigates to the posts tab
+  useEffect(() => {
+    if (!user) return;
+    if (activeTab === "posts") {
+      fetchPosts();
+    }
+  }, [activeTab, user, fetchPosts]);
 
   const handleLoginSuccess = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -366,8 +374,10 @@ export default function SimpleMarketingDashboard() {
         throw new Error(text || `HTTP ${res.status}`);
       }
 
-      // Refresh posts list to remove deleted post
-      await fetchPosts();
+      // Remove deleted post from state instead of refetching
+      setPosts((prevPosts) =>
+        prevPosts.filter((p) => p.id !== postToDelete.id)
+      );
       setDeleteDialogOpen(false);
       setPostToDelete(null);
     } catch (err: unknown) {
@@ -556,7 +566,11 @@ export default function SimpleMarketingDashboard() {
           </Button>
         </div>
       </div>
-      <Tabs defaultValue="compose">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        defaultValue="compose"
+      >
         <TabsList className="bg-transparent mb-4">
           <TabsTrigger value="compose" className="px-4 py-2">
             Compose
