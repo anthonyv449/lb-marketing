@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prospect Analyzer — Local Business Data Tool</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f3f4f6;--surface:#fff;--border:#e5e7eb;--text:#111827;--text2:#6b7280;
+  --accent:#2563eb;--accent-hover:#1d4ed8;--green:#10b981;--amber:#f59e0b;
+  --red:#ef4444;--high:#10b981;--medium:#f59e0b;--low:#94a3b8;
+  --radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh}
+header{background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;padding:1rem 2rem;display:flex;align-items:center;gap:1rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
+header .badge{background:rgba(255,255,255,.12);font-size:.75rem;padding:.2rem .6rem;border-radius:99px;font-weight:500}
+.container{max-width:1440px;margin:0 auto;padding:1.5rem}
+
+/* Upload Zone */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;background:var(--surface);cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:1.5rem}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:#eff6ff}
+.upload-zone svg{width:48px;height:48px;color:var(--text2);margin-bottom:.5rem}
+.upload-zone p{color:var(--text2);font-size:.875rem}
+.upload-zone .browse{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline}
+#upload-log{max-height:140px;overflow-y:auto;font-size:.8rem;color:var(--text2);margin-top:.75rem;text-align:left;padding:0 1rem}
+#upload-log .log-entry{padding:.25rem 0;border-bottom:1px solid var(--border)}
+#upload-log .log-entry:last-child{border-bottom:none}
+.log-added{color:var(--green);font-weight:600}
+.log-skipped{color:var(--amber);font-weight:600}
+
+/* Stats Row */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border)}
+.stat-card .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:.35rem;font-weight:600}
+.stat-card .value{font-size:1.75rem;font-weight:700}
+.stat-card .sub{font-size:.75rem;color:var(--text2);margin-top:.2rem}
+
+/* Charts */
+.charts-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1rem;margin-bottom:1.5rem}
+.chart-card{background:var(--surface);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border)}
+.chart-card h3{font-size:.85rem;font-weight:700;margin-bottom:.75rem;color:var(--text)}
+.chart-wrap{position:relative;height:260px}
+
+/* Filters */
+.filters-bar{background:var(--surface);border-radius:var(--radius);padding:1rem 1.25rem;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:.25rem}
+.filter-group label{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;font-weight:600;color:var(--text2)}
+.filter-group select,.filter-group input{padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;font-size:.8rem;background:#fff;color:var(--text);min-width:120px}
+.filter-group input[type=number]{width:80px}
+.btn{padding:.45rem 1rem;border:none;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-hover)}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn-outline:hover{background:#eff6ff}
+.btn-sm{padding:.3rem .7rem;font-size:.75rem}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#dc2626}
+.filter-actions{display:flex;gap:.5rem;align-items:flex-end;margin-left:auto}
+
+/* Table */
+.table-wrapper{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;margin-bottom:1.5rem}
+.table-header{padding:.75rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
+.table-header .count{font-size:.85rem;color:var(--text2)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead{background:#f9fafb;position:sticky;top:0}
+th{padding:.6rem .75rem;text-align:left;font-weight:700;color:var(--text2);text-transform:uppercase;font-size:.7rem;letter-spacing:.04em;cursor:pointer;white-space:nowrap;user-select:none;border-bottom:2px solid var(--border)}
+th:hover{color:var(--text)}
+th .sort-icon{margin-left:.3rem;opacity:.4}
+th.sorted .sort-icon{opacity:1;color:var(--accent)}
+td{padding:.55rem .75rem;border-bottom:1px solid var(--border);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:#f9fafb}
+.lead-badge{display:inline-block;padding:.1rem .5rem;border-radius:99px;font-size:.7rem;font-weight:700;text-transform:uppercase}
+.lead-high{background:#d1fae5;color:#065f46}
+.lead-medium{background:#fef3c7;color:#92400e}
+.lead-low{background:#f1f5f9;color:#475569}
+a.website-link{color:var(--accent);text-decoration:none;font-weight:500}
+a.website-link:hover{text-decoration:underline}
+
+/* Pagination */
+.pagination{display:flex;justify-content:center;align-items:center;gap:.5rem;padding:.75rem}
+.pagination button{padding:.3rem .65rem;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:.8rem;color:var(--text)}
+.pagination button:hover{background:var(--bg)}
+.pagination button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pagination button:disabled{opacity:.4;cursor:default}
+
+/* Empty State */
+.empty-state{text-align:center;padding:4rem 2rem;color:var(--text2)}
+.empty-state svg{width:64px;height:64px;margin-bottom:1rem;opacity:.5}
+.empty-state h3{font-size:1.1rem;margin-bottom:.5rem;color:var(--text)}
+
+/* Responsive */
+@media(max-width:768px){
+  .container{padding:1rem}
+  .filters-bar{flex-direction:column;align-items:stretch}
+  .filter-actions{margin-left:0}
+  .charts-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+  <h1>Prospect Analyzer</h1>
+  <span class="badge" id="record-badge">0 records</span>
+</header>
+
+<div class="container">
+
+  <!-- Upload Zone -->
+  <div class="upload-zone" id="drop-zone">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <p>Drag & drop CSV or XLSX files here, or <span class="browse" id="browse-btn">browse files</span></p>
+    <input type="file" id="file-input" multiple="multiple" accept=".csv,.xlsx,.xls" style="display:none">
+    <div id="upload-log"></div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row" id="stats-row" style="display:none">
+    <div class="stat-card"><div class="label">Total Businesses</div><div class="value" id="stat-total">0</div><div class="sub" id="stat-sources">from 0 files</div></div>
+    <div class="stat-card"><div class="label">Avg Rating</div><div class="value" id="stat-rating">—</div><div class="sub" id="stat-rated">0 rated</div></div>
+    <div class="stat-card"><div class="label">High Leads</div><div class="value" id="stat-high" style="color:var(--high)">0</div><div class="sub" id="stat-high-pct">0%</div></div>
+    <div class="stat-card"><div class="label">No Website</div><div class="value" id="stat-noweb" style="color:var(--red)">0</div><div class="sub" id="stat-noweb-pct">0%</div></div>
+    <div class="stat-card"><div class="label">Unique Cities</div><div class="value" id="stat-cities">0</div><div class="sub" id="stat-categories">0 categories</div></div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid" id="charts-grid" style="display:none">
+    <div class="chart-card"><h3>Lead Score Breakdown</h3><div class="chart-wrap"><canvas id="chart-leads"></canvas></div></div>
+    <div class="chart-card"><h3>Rating Distribution</h3><div class="chart-wrap"><canvas id="chart-ratings"></canvas></div></div>
+    <div class="chart-card"><h3>Top Cities by High-Score Leads</h3><div class="chart-wrap"><canvas id="chart-cities"></canvas></div></div>
+    <div class="chart-card"><h3>Categories Overview</h3><div class="chart-wrap"><canvas id="chart-categories"></canvas></div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar" id="filters-bar" style="display:none">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="f-search" placeholder="Name or city…">
+    </div>
+    <div class="filter-group">
+      <label>Lead Score</label>
+      <select id="f-lead"><option value="">All</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select id="f-category"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Min Rating</label>
+      <input type="number" id="f-rating-min" min="0" max="5" step="0.1" placeholder="0">
+    </div>
+    <div class="filter-group">
+      <label>Max Rating</label>
+      <input type="number" id="f-rating-max" min="0" max="5" step="0.1" placeholder="5">
+    </div>
+    <div class="filter-group">
+      <label>Min Reviews</label>
+      <input type="number" id="f-reviews-min" min="0" placeholder="0">
+    </div>
+    <div class="filter-group">
+      <label>Has Website</label>
+      <select id="f-website"><option value="">Any</option><option value="yes">Yes</option><option value="no">No</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Source File</label>
+      <select id="f-source"><option value="">All</option></select>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-outline btn-sm" onclick="resetFilters()">Reset</button>
+      <button class="btn btn-primary btn-sm" onclick="exportFiltered()">Export Filtered CSV</button>
+      <button class="btn btn-outline btn-sm" onclick="exportAll()">Export All CSV</button>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div id="table-section" style="display:none">
+    <div class="table-wrapper">
+      <div class="table-header">
+        <span class="count" id="table-count">Showing 0 records</span>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-danger btn-sm" onclick="clearAllData()">Clear All Data</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr id="table-head"></tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" id="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <h3>No data loaded</h3>
+    <p>Upload CSV or XLSX prospect files to get started.</p>
+  </div>
+
+</div>
+
+<script>
+const COLUMNS = [
+  {key:'name',label:'Business Name',width:'20%'},
+  {key:'category',label:'Category'},
+  {key:'city',label:'City'},
+  {key:'rating',label:'Rating'},
+  {key:'reviews',label:'Reviews'},
+  {key:'website',label:'Website'},
+  {key:'phone',label:'Phone'},
+  {key:'leadScore',label:'Lead Score'},
+  {key:'source',label:'Source File'}
+];
+
+const PAGE_SIZE = 50;
+let allRecords = [];
+let filteredRecords = [];
+let currentPage = 1;
+let sortCol = null;
+let sortDir = 'asc';
+let sourceFiles = new Set();
+let charts = {};
+
+// ---- File Upload ----
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const uploadLog = document.getElementById('upload-log');
+
+fileInput.multiple = true;
+
+function openFilePicker() {
+  fileInput.multiple = true;
+  fileInput.value = '';
+  fileInput.click();
+}
+
+dropZone.addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  openFilePicker();
+});
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length > 0) handleFiles(fileInput.files);
+});
+
+async function handleFiles(files) {
+  for (const file of files) {
+    _debugRowCount = 0;
+    console.log(`[Prospect Analyzer] Processing file: "${file.name}"`);
+    try {
+      const rows = await parseFile(file);
+      const result = mergeRecords(rows, file.name);
+      logUpload(file.name, result.added, result.skipped);
+      sourceFiles.add(file.name);
+    } catch (err) {
+      console.error(`[Prospect Analyzer] Error processing "${file.name}":`, err);
+      logUpload(file.name, 0, 0, err.message);
+    }
+  }
+  onDataChanged();
+}
+
+function parseFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    const isCSV = file.name.toLowerCase().endsWith('.csv');
+
+    reader.onload = e => {
+      try {
+        let rows;
+        if (isCSV) {
+          rows = parseCSVText(e.target.result, file.name);
+        } else {
+          const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+          const sheet = wb.Sheets[wb.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet, {defval:'', raw:false});
+          rows = json.map(r => normalizeRow(r, file.name));
+        }
+        resolve(rows);
+      } catch (err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('File read error'));
+    if (isCSV) reader.readAsText(file); else reader.readAsArrayBuffer(file);
+  });
+}
+
+function parseCSVText(text, filename) {
+  const lines = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+      current += ch;
+    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+      if (current.length > 0) {
+        lines.push(current);
+        current = '';
+      }
+      if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') i++;
+    } else {
+      current += ch;
+    }
+  }
+  if (current.length > 0) lines.push(current);
+
+  if (lines.length < 2) return [];
+
+  const headers = splitCSVLine(lines[0]);
+  console.log('[Prospect Analyzer] CSV headers parsed:', headers);
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = splitCSVLine(lines[i]);
+    if (vals.length === 0 || vals.every(v => !v.trim())) continue;
+    if (vals.length !== headers.length) {
+      console.warn(`[Prospect Analyzer] Row ${i}: expected ${headers.length} columns, got ${vals.length}`, vals);
+    }
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (vals[idx] != null ? vals[idx] : '').trim(); });
+    rows.push(normalizeRow(obj, filename));
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
+
+function buildColumnMap(raw) {
+  const map = {};
+  const aliases = {
+    name: ['name', 'businessname', 'business'],
+    address: ['address', 'fulladdress', 'location'],
+    rating: ['rating', 'stars'],
+    reviews: ['reviews', 'reviewcount', 'numreviews'],
+    website: ['website', 'url', 'site'],
+    phone: ['phone', 'phonenumber', 'telephone'],
+    leadScore: ['leadscore', 'lead score', 'score'],
+    status: ['status', 'contacted'],
+  };
+  const rawKeys = Object.keys(raw);
+  for (const [field, alts] of Object.entries(aliases)) {
+    for (const alt of alts) {
+      const norm = alt.replace(/[^a-z]/g, '');
+      for (const rk of rawKeys) {
+        const rkNorm = rk.toLowerCase().replace(/[^a-z]/g, '');
+        if (rkNorm === norm) {
+          map[field] = rk;
+          break;
+        }
+      }
+      if (map[field]) break;
+    }
+  }
+  return map;
+}
+
+let _debugRowCount = 0;
+
+function normalizeRow(raw, filename) {
+  const colMap = buildColumnMap(raw);
+
+  const str = (field) => {
+    const key = colMap[field];
+    if (key == null) return '';
+    const v = raw[key];
+    if (v == null || v === undefined) return '';
+    return String(v).trim();
+  };
+
+  const name = str('name');
+  const address = str('address');
+  const ratingStr = str('rating');
+  const reviewsStr = str('reviews');
+  const website = str('website');
+  const phoneRaw = str('phone');
+  const leadScoreStr = str('leadScore');
+  const status = str('status');
+
+  const rating = ratingStr !== '' ? parseFloat(ratingStr) : null;
+  const reviews = reviewsStr !== '' ? (parseInt(reviewsStr, 10) || 0) : 0;
+
+  if (_debugRowCount < 3) {
+    console.group(`[Prospect Analyzer] Row ${_debugRowCount + 1} from "${filename}"`);
+    console.log('Raw keys:', Object.keys(raw));
+    console.log('Column map:', JSON.parse(JSON.stringify(colMap)));
+    console.log('Raw values:', JSON.parse(JSON.stringify(raw)));
+    console.log('Parsed → name:', name, '| rating:', ratingStr, '→', rating,
+      '| reviews:', reviewsStr, '→', reviews,
+      '| phone:', phoneRaw, '| website:', website,
+      '| lead:', leadScoreStr);
+    console.groupEnd();
+    _debugRowCount++;
+  }
+
+  return {
+    name,
+    address,
+    city: extractCity(filename),
+    rating: (rating !== null && !isNaN(rating)) ? rating : null,
+    reviews,
+    website,
+    phone: formatPhone(phoneRaw),
+    leadScore: normalizeLeadScore(leadScoreStr),
+    status,
+    category: extractCategory(filename),
+    source: filename,
+    _dedupeKey: (name + '|' + address).toLowerCase().replace(/\s+/g, ' ')
+  };
+}
+
+function normalizeLeadScore(val) {
+  if (!val) return 'Unknown';
+  const v = val.toLowerCase().trim();
+  if (v.startsWith('h')) return 'High';
+  if (v.startsWith('m')) return 'Medium';
+  if (v.startsWith('l')) return 'Low';
+  return val || 'Unknown';
+}
+
+function extractCity(filename) {
+  const match = filename.match(/([A-Za-z][A-Za-z_]+,_[A-Z]{2})/);
+  if (match) {
+    return match[1].replace(/_/g, ' ');
+  }
+  return 'Unknown';
+}
+
+function formatPhone(raw) {
+  if (!raw) return '';
+  const s = String(raw);
+  const digits = s.replace(/\D/g, '');
+  if (digits.length === 10) {
+    return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+  }
+  if (digits.length === 11 && digits[0] === '1') {
+    return `(${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+  }
+  if (/^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/.test(s)) return s;
+  return s;
+}
+
+function extractCategory(filename) {
+  const match = filename.match(/^prospects?-([a-zA-Z_]+)/i);
+  if (match) {
+    return match[1].replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+  return filename.replace(/\.[^.]+$/, '');
+}
+
+function mergeRecords(rows, filename) {
+  const existingKeys = new Set(allRecords.map(r => r._dedupeKey));
+  let added = 0, skipped = 0;
+  for (const row of rows) {
+    if (!row.name) { skipped++; continue; }
+    if (existingKeys.has(row._dedupeKey)) {
+      skipped++;
+    } else {
+      existingKeys.add(row._dedupeKey);
+      allRecords.push(row);
+      added++;
+    }
+  }
+  return { added, skipped };
+}
+
+function logUpload(filename, added, skipped, error) {
+  const el = document.createElement('div');
+  el.className = 'log-entry';
+  if (error) {
+    el.innerHTML = `<strong>${esc(filename)}</strong> — <span style="color:var(--red)">Error: ${esc(error)}</span>`;
+  } else {
+    el.innerHTML = `<strong>${esc(filename)}</strong> — <span class="log-added">+${added} added</span>, <span class="log-skipped">${skipped} duplicates skipped</span>`;
+  }
+  uploadLog.prepend(el);
+}
+
+// ---- Data Changed Pipeline ----
+function onDataChanged() {
+  updateFilterOptions();
+  applyFilters();
+  showUI(allRecords.length > 0);
+  document.getElementById('record-badge').textContent = allRecords.length + ' records';
+}
+
+function showUI(visible) {
+  const d = visible ? '' : 'none';
+  document.getElementById('stats-row').style.display = visible ? 'grid' : 'none';
+  document.getElementById('charts-grid').style.display = visible ? 'grid' : 'none';
+  document.getElementById('filters-bar').style.display = visible ? 'flex' : 'none';
+  document.getElementById('table-section').style.display = visible ? '' : 'none';
+  document.getElementById('empty-state').style.display = visible ? 'none' : '';
+}
+
+// ---- Filters ----
+function updateFilterOptions() {
+  const cats = [...new Set(allRecords.map(r => r.category))].sort();
+  const catSel = document.getElementById('f-category');
+  const curCat = catSel.value;
+  catSel.innerHTML = '<option value="">All</option>' + cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  catSel.value = curCat;
+
+  const srcs = [...sourceFiles].sort();
+  const srcSel = document.getElementById('f-source');
+  const curSrc = srcSel.value;
+  srcSel.innerHTML = '<option value="">All</option>' + srcs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  srcSel.value = curSrc;
+}
+
+function applyFilters() {
+  const search = document.getElementById('f-search').value.toLowerCase().trim();
+  const lead = document.getElementById('f-lead').value;
+  const cat = document.getElementById('f-category').value;
+  const rMin = parseFloat(document.getElementById('f-rating-min').value) || 0;
+  const rMax = parseFloat(document.getElementById('f-rating-max').value) || 5;
+  const revMin = parseInt(document.getElementById('f-reviews-min').value, 10) || 0;
+  const web = document.getElementById('f-website').value;
+  const src = document.getElementById('f-source').value;
+
+  filteredRecords = allRecords.filter(r => {
+    if (search && !r.name.toLowerCase().includes(search) && !r.city.toLowerCase().includes(search)) return false;
+    if (lead && r.leadScore !== lead) return false;
+    if (cat && r.category !== cat) return false;
+    if (r.rating !== null && (r.rating < rMin || r.rating > rMax)) return false;
+    if (r.rating === null && rMin > 0) return false;
+    if (r.reviews < revMin) return false;
+    if (web === 'yes' && !r.website) return false;
+    if (web === 'no' && r.website) return false;
+    if (src && r.source !== src) return false;
+    return true;
+  });
+
+  currentPage = 1;
+  updateStats();
+  updateCharts();
+  renderTable();
+}
+
+['f-search','f-lead','f-category','f-rating-min','f-rating-max','f-reviews-min','f-website','f-source'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', debounce(applyFilters, 200));
+});
+
+function resetFilters() {
+  document.getElementById('f-search').value = '';
+  document.getElementById('f-lead').value = '';
+  document.getElementById('f-category').value = '';
+  document.getElementById('f-rating-min').value = '';
+  document.getElementById('f-rating-max').value = '';
+  document.getElementById('f-reviews-min').value = '';
+  document.getElementById('f-website').value = '';
+  document.getElementById('f-source').value = '';
+  applyFilters();
+}
+
+// ---- Stats ----
+function updateStats() {
+  const data = filteredRecords;
+  const total = data.length;
+  const rated = data.filter(r => r.rating !== null);
+  const avgRating = rated.length ? (rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : '—';
+  const high = data.filter(r => r.leadScore === 'High').length;
+  const noWeb = data.filter(r => !r.website).length;
+  const cities = new Set(data.map(r => r.city));
+  const categories = new Set(data.map(r => r.category));
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-sources').textContent = `from ${sourceFiles.size} file${sourceFiles.size === 1 ? '' : 's'}`;
+  document.getElementById('stat-rating').textContent = avgRating;
+  document.getElementById('stat-rated').textContent = `${rated.length} rated`;
+  document.getElementById('stat-high').textContent = high;
+  document.getElementById('stat-high-pct').textContent = total ? Math.round(high / total * 100) + '%' : '0%';
+  document.getElementById('stat-noweb').textContent = noWeb;
+  document.getElementById('stat-noweb-pct').textContent = total ? Math.round(noWeb / total * 100) + '%' : '0%';
+  document.getElementById('stat-cities').textContent = cities.size;
+  document.getElementById('stat-categories').textContent = categories.size + ' categories';
+}
+
+// ---- Charts ----
+function updateCharts() {
+  updateLeadChart();
+  updateRatingChart();
+  updateCitiesChart();
+  updateCategoriesChart();
+}
+
+function updateLeadChart() {
+  const counts = {High: 0, Medium: 0, Low: 0, Unknown: 0};
+  filteredRecords.forEach(r => { counts[r.leadScore] = (counts[r.leadScore] || 0) + 1; });
+  const labels = Object.keys(counts).filter(k => counts[k] > 0);
+  const values = labels.map(k => counts[k]);
+  const colors = labels.map(k => ({High:'#10b981',Medium:'#f59e0b',Low:'#94a3b8',Unknown:'#d1d5db'})[k]);
+
+  if (charts.leads) charts.leads.destroy();
+  charts.leads = new Chart(document.getElementById('chart-leads'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' } } } }
+  });
+}
+
+function updateRatingChart() {
+  const buckets = {'0 – 2': 0, '2 – 3': 0, '3 – 4': 0, '4 – 4.5': 0, '4.5 – 5': 0, 'No Rating': 0};
+  filteredRecords.forEach(r => {
+    if (r.rating === null) buckets['No Rating']++;
+    else if (r.rating < 2) buckets['0 – 2']++;
+    else if (r.rating < 3) buckets['2 – 3']++;
+    else if (r.rating < 4) buckets['3 – 4']++;
+    else if (r.rating < 4.5) buckets['4 – 4.5']++;
+    else buckets['4.5 – 5']++;
+  });
+
+  if (charts.ratings) charts.ratings.destroy();
+  charts.ratings = new Chart(document.getElementById('chart-ratings'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(buckets),
+      datasets: [{ label: 'Businesses', data: Object.values(buckets), backgroundColor: ['#ef4444','#f97316','#f59e0b','#84cc16','#10b981','#d1d5db'], borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+function updateCitiesChart() {
+  const cityMap = {};
+  filteredRecords.filter(r => r.leadScore === 'High').forEach(r => {
+    cityMap[r.city] = (cityMap[r.city] || 0) + 1;
+  });
+  const sorted = Object.entries(cityMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const labels = sorted.map(s => s[0]);
+  const values = sorted.map(s => s[1]);
+
+  if (charts.cities) charts.cities.destroy();
+  charts.cities = new Chart(document.getElementById('chart-cities'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'High Leads', data: values, backgroundColor: '#10b981', borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
+function updateCategoriesChart() {
+  const catMap = {};
+  filteredRecords.forEach(r => { catMap[r.category] = (catMap[r.category] || 0) + 1; });
+  const sorted = Object.entries(catMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const labels = sorted.map(s => s[0]);
+  const values = sorted.map(s => s[1]);
+  const palette = ['#2563eb','#7c3aed','#db2777','#ea580c','#ca8a04','#16a34a','#0891b2','#4f46e5','#be123c','#65a30d'];
+
+  if (charts.categories) charts.categories.destroy();
+  charts.categories = new Chart(document.getElementById('chart-categories'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } } } }
+  });
+}
+
+// ---- Table ----
+function renderTable() {
+  renderTableHead();
+  renderTableBody();
+  renderPagination();
+  document.getElementById('table-count').textContent = `Showing ${filteredRecords.length} of ${allRecords.length} records`;
+}
+
+function renderTableHead() {
+  const tr = document.getElementById('table-head');
+  tr.innerHTML = COLUMNS.map(col => {
+    const sorted = sortCol === col.key;
+    const arrow = sorted ? (sortDir === 'asc' ? '▲' : '▼') : '⇅';
+    return `<th class="${sorted ? 'sorted' : ''}" data-col="${col.key}" style="${col.width ? 'width:'+col.width : ''}">${col.label}<span class="sort-icon">${arrow}</span></th>`;
+  }).join('');
+  tr.querySelectorAll('th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortCol = col; sortDir = 'asc'; }
+      sortRecords();
+      renderTable();
+    });
+  });
+}
+
+function sortRecords() {
+  if (!sortCol) return;
+  filteredRecords.sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (sortCol === 'rating' || sortCol === 'reviews') {
+      va = va ?? -1; vb = vb ?? -1;
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    if (sortCol === 'leadScore') {
+      const order = {High: 0, Medium: 1, Low: 2, Unknown: 3};
+      va = order[va] ?? 4; vb = order[vb] ?? 4;
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    va = String(va || '').toLowerCase();
+    vb = String(vb || '').toLowerCase();
+    return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+}
+
+function renderTableBody() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredRecords.slice(start, start + PAGE_SIZE);
+  const tbody = document.getElementById('table-body');
+
+  tbody.innerHTML = page.map(r => `<tr>
+    <td title="${esc(r.name)}">${esc(r.name)}</td>
+    <td>${esc(r.category)}</td>
+    <td>${esc(r.city)}</td>
+    <td>${r.rating !== null ? r.rating.toFixed(1) : '—'}</td>
+    <td>${r.reviews}</td>
+    <td>${r.website ? `<a class="website-link" href="${esc(r.website)}" target="_blank" rel="noopener">Visit</a>` : '<span style="color:var(--text2)">—</span>'}</td>
+    <td>${esc(r.phone) || '—'}</td>
+    <td><span class="lead-badge lead-${r.leadScore.toLowerCase()}">${esc(r.leadScore)}</span></td>
+    <td title="${esc(r.source)}">${esc(truncate(r.source, 30))}</td>
+  </tr>`).join('');
+}
+
+function renderPagination() {
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+
+  let html = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">‹ Prev</button>`;
+  const range = getPageRange(currentPage, totalPages);
+  for (const p of range) {
+    if (p === '...') html += `<span style="padding:0 .3rem;color:var(--text2)">…</span>`;
+    else html += `<button class="${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">Next ›</button>`;
+  pag.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filteredRecords.length / PAGE_SIZE);
+  currentPage = Math.max(1, Math.min(p, totalPages));
+  renderTableBody();
+  renderPagination();
+  document.querySelector('.table-scroll')?.scrollTo(0, 0);
+}
+
+function getPageRange(current, total) {
+  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+  const pages = [];
+  pages.push(1);
+  if (current > 3) pages.push('...');
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+  if (current < total - 2) pages.push('...');
+  pages.push(total);
+  return pages;
+}
+
+// ---- Export ----
+function exportCSV(records, filename) {
+  const headers = ['Business Name','Category','City','Address','Rating','Reviews','Website','Phone','Lead Score','Status','Source File'];
+  const rows = records.map(r => [r.name, r.category, r.city, r.address, r.rating ?? '', r.reviews, r.website, r.phone, r.leadScore, r.status, r.source]);
+  const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportFiltered() { exportCSV(filteredRecords, `prospects-filtered-${dateStamp()}.csv`); }
+function exportAll() { exportCSV(allRecords, `prospects-all-${dateStamp()}.csv`); }
+
+function clearAllData() {
+  if (!confirm('Clear all loaded data? This cannot be undone.')) return;
+  allRecords = [];
+  filteredRecords = [];
+  sourceFiles.clear();
+  uploadLog.innerHTML = '';
+  sortCol = null;
+  sortDir = 'asc';
+  onDataChanged();
+}
+
+// ---- Utilities ----
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+function truncate(str, n) { return str && str.length > n ? str.slice(0, n) + '…' : str; }
+function dateStamp() { return new Date().toISOString().slice(0, 10); }
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+</script>
+</body>
+</html>
