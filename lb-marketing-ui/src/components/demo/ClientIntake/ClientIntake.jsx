@@ -54,7 +54,7 @@ function generateTxt(d) {
   ].join('\n');
 }
 
-export default function ClientIntake({ onSave, initialData = {}, clientId }) {
+export default function ClientIntake({ onSave, onCancel, initialData = {}, clientId }) {
   const [form, setForm] = useState({ ...EMPTY, ...initialData });
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
@@ -195,7 +195,7 @@ export default function ClientIntake({ onSave, initialData = {}, clientId }) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
         <button
           type="button"
           onClick={handleSave}
@@ -206,6 +206,15 @@ export default function ClientIntake({ onSave, initialData = {}, clientId }) {
         >
           {saved ? '✓ Saved' : 'Save Intake'}
         </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            style={{ ...baseStyles.btn, ...baseStyles.btnSecondary }}
+          >
+            Cancel
+          </button>
+        )}
         <button
           type="button"
           onClick={handleExport}

@@ -23,7 +23,7 @@ function formatContact(business) {
   return '—';
 }
 
-export default function ClientEngagementsTable({ onSelectClient }) {
+export default function ClientEngagementsTable({ onSelectClient, refreshTrigger }) {
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,7 +44,7 @@ export default function ClientEngagementsTable({ onSelectClient }) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [refreshTrigger]);
 
   const handleRowClick = (row) => {
     onSelectClient?.(row);
