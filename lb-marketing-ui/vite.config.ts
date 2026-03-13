@@ -75,6 +75,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/demo": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   // Build configuration
@@ -83,6 +88,10 @@ export default defineConfig({
     sourcemap: false,
     minify: "esbuild",
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        affiliate: path.resolve(__dirname, "affiliatehelper.html"),
+      },
       output: {
         manualChunks: {
           "react-vendor": ["react", "react-dom"],

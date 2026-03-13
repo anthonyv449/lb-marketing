@@ -3,11 +3,11 @@
  * and client goals. Supports persistence via api/client.js and .txt export.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { COLORS, FONTS, baseStyles } from '../shared/styles';
 import { Field, Input, Textarea, Select, Divider } from '../shared/FormFields';
 import { INDUSTRY_OPTIONS, GBP_ACCESS_OPTIONS, START_TYPE_OPTIONS } from './ClientIntake.config';
-import { saveClientIntake, fetchClientIntake } from '../api/client';
+import { saveClientIntake, createNewEngagement } from '../api/client';
 
 const EMPTY = {
   businessName: '',
@@ -58,31 +58,42 @@ export default function ClientIntake({ onSave, initialData = {}, clientId }) {
   const [form, setForm] = useState({ ...EMPTY, ...initialData });
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    if (!clientId) return;
-    fetchClientIntake(clientId).then((data) => {
-      if (data) setForm((prev) => ({ ...prev, ...data }));
-    });
-  }, [clientId]);
+  const [saveError, setSaveError] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
 
   const set = useCallback((key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
     setErrors((prev) => ({ ...prev, [key]: undefined }));
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const next = {};
     if (!form.businessName.trim()) next.businessName = 'Business name is required';
     if (!form.contactName.trim()) next.contactName = 'Contact name is required';
+    if (!form.industry?.trim()) next.industry = 'Industry is required';
+    if (!form.email.trim()) next.email = 'Email is required';
     if (Object.keys(next).length) {
       setErrors(next);
       return;
     }
-    onSave?.(form);
-    saveClientIntake({ ...form, clientId });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setSaveError('');
+    setSaveMessage('');
+    try {
+      let engagementId = clientId;
+      if (!engagementId) {
+        const eng = await createNewEngagement(form.businessName.trim() || 'New Client');
+        engagementId = String(eng.id);
+      }
+      const savedForm = await saveClientIntake({ ...form, clientId: engagementId });
+      const merged = { ...form, ...savedForm, clientId: engagementId };
+      setForm(merged);
+      onSave?.(merged);
+      setSaveMessage('Saved to engagement and business profile.');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (error) {
+      setSaveError(error.message || 'Failed to save intake.');
+    }
   };
 
   const handleExport = () => {
@@ -172,6 +183,17 @@ export default function ClientIntake({ onSave, initialData = {}, clientId }) {
           <Textarea id="ci-notes" value={form.notes} onChange={set('notes')} placeholder="Anything else relevant…" rows={4} />
         </Field>
       </div>
+
+      {saveError && (
+        <div style={{ ...errStyle, marginTop: 10 }}>
+          {saveError}
+        </div>
+      )}
+      {saveMessage && !saveError && (
+        <div style={{ fontFamily: FONTS.mono, fontSize: '0.7rem', color: COLORS.green, marginTop: 10 }}>
+          {saveMessage}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
         <button

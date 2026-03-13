@@ -26,3 +26,21 @@ def get_business(business_id: int, db: Session = Depends(get_db)):
     if not obj:
         raise HTTPException(404, "Business not found")
     return obj
+
+
+@router.patch("/{business_id}", response_model=schemas.BusinessOut)
+def update_business(
+    business_id: int,
+    payload: schemas.BusinessUpdate,
+    db: Session = Depends(get_db),
+):
+    obj = db.get(models.Business, business_id)
+    if not obj:
+        raise HTTPException(404, "Business not found")
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(obj, field, value)
+
+    db.commit()
+    db.refresh(obj)
+    return obj

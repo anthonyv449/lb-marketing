@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     AZURE_OPENAI_DEPLOYMENT: str = ""
     AZURE_OPENAI_MODEL_NAME: str = ""
 
+    # Anthropic (Demo module — review reply generation)
+    ANTHROPIC_API_KEY: str = ""
+
     @property
     def database_url(self) -> str:
         return (
