@@ -21,9 +21,6 @@ function ProgressBar({ value, height = 6, color = COLORS.accent }) {
 }
 
 export default function TaskTracker({ vertical, clientId }) {
-  const { checked, toggle, reset } = useTaskState(clientId);
-  const [activeWeek, setActiveWeek] = useState(1);
-
   const extras = vertical && VERTICAL_EXTRAS[vertical] ? VERTICAL_EXTRAS[vertical] : null;
 
   const allIds = useMemo(() => {
@@ -31,6 +28,9 @@ export default function TaskTracker({ vertical, clientId }) {
     if (extras) ids.push(...extras.items.map((i) => i.id));
     return ids;
   }, [extras]);
+
+  const { checked, toggle, reset, loading } = useTaskState(clientId, allIds);
+  const [activeWeek, setActiveWeek] = useState(1);
 
   const overallDone = allIds.filter((id) => checked[id]).length;
   const overallPct = pct(overallDone, allIds.length);
@@ -57,6 +57,19 @@ export default function TaskTracker({ vertical, clientId }) {
     padding: '10px 6px',
     fontSize: '0.68rem',
   };
+
+  if (loading && clientId) {
+    return (
+      <div style={baseStyles.sectionBox}>
+        <h2 style={{ fontFamily: FONTS.heading, color: COLORS.cream, fontSize: '1.6rem', marginTop: 0, marginBottom: 4 }}>
+          Demo Task Tracker
+        </h2>
+        <p style={{ fontFamily: FONTS.body, color: COLORS.muted, fontSize: '1rem', marginTop: 0, marginBottom: 20 }}>
+          Loading tasks…
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={baseStyles.sectionBox}>

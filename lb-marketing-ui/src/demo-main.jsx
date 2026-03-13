@@ -10,9 +10,7 @@ import {
   ClientIntake,
   TaskTracker,
   AuditBuilder,
-  ReviewRequestComposer,
   MonthEndReport,
-  createNewEngagement,
 } from './components/demo';
 
 const COLORS = {
@@ -45,10 +43,8 @@ async function login(username, password) {
 }
 
 const TABS = [
-  { key: 'intake',   label: 'Client Intake' },
   { key: 'tasks',    label: 'Task Tracker' },
   { key: 'audit',    label: 'Audit Builder' },
-  { key: 'review',   label: 'Review Composer' },
   { key: 'report',   label: 'Month-End Report' },
 ];
 
@@ -193,11 +189,80 @@ function App() {
   return <DemoToolkit />;
 }
 
+function IntakeModal({ onSave, onCancel }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: 24,
+      }}
+      onClick={(e) => e.target === e.currentTarget && onCancel()}
+    >
+      <div
+        style={{
+          background: COLORS.bg,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 8,
+          maxWidth: 640,
+          width: '100%',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px 24px',
+            borderBottom: `1px solid ${COLORS.border}`,
+          }}
+        >
+          <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.4rem', margin: 0, color: COLORS.cream }}>
+            Create Client Engagement
+          </h3>
+          <button
+            type="button"
+            onClick={onCancel}
+            aria-label="Close"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: COLORS.muted,
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              padding: '0 8px',
+              lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+        </div>
+        <div style={{ padding: 24 }}>
+          <ClientIntake
+            onSave={onSave}
+            onCancel={onCancel}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DemoToolkit() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [active, setActive] = useState('tasks');
   const [intakeData, setIntakeData] = useState({});
-  const [clientId, setClientId] = useState('');
+  const [intakeModalOpen, setIntakeModalOpen] = useState(false);
+  const [tableRefreshTrigger, setTableRefreshTrigger] = useState(0);
 
   const handleSelectClient = (client) => {
     setSelectedClient(client);
@@ -214,6 +279,16 @@ function DemoToolkit() {
 
   const handleBackToList = () => {
     setSelectedClient(null);
+  };
+
+  const handleIntakeSaved = (data) => {
+    setIntakeData(data);
+    setIntakeModalOpen(false);
+    setTableRefreshTrigger((t) => t + 1);
+  };
+
+  const handleIntakeCancel = () => {
+    setIntakeModalOpen(false);
   };
 
   return (
@@ -234,7 +309,39 @@ function DemoToolkit() {
         </h1>
 
         {!selectedClient ? (
-          <ClientEngagementsTable onSelectClient={handleSelectClient} />
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <button
+                type="button"
+                onClick={() => setIntakeModalOpen(true)}
+                style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  padding: '10px 20px',
+                  background: `${COLORS.accent}14`,
+                  color: COLORS.accent,
+                  border: `1px solid ${COLORS.accent}`,
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                }}
+              >
+                + Create client engagement
+              </button>
+            </div>
+            <ClientEngagementsTable
+              onSelectClient={handleSelectClient}
+              refreshTrigger={tableRefreshTrigger}
+            />
+            {intakeModalOpen && (
+              <IntakeModal
+                onSave={handleIntakeSaved}
+                onCancel={handleIntakeCancel}
+              />
+            )}
+          </>
         ) : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
@@ -289,16 +396,6 @@ function DemoToolkit() {
             </nav>
 
             {/* Active panel */}
-            {active === 'intake' && (
-              <ClientIntake
-                clientId={selectedClient.id}
-                initialData={intakeData}
-                onSave={(data) => {
-                  setIntakeData(data);
-                  console.log('Intake saved:', data);
-                }}
-              />
-            )}
             {active === 'tasks' && (
               <TaskTracker
                 clientId={selectedClient.id}
@@ -307,9 +404,6 @@ function DemoToolkit() {
             )}
             {active === 'audit' && (
               <AuditBuilder businessName={intakeData.businessName || selectedClient.name || ''} />
-            )}
-            {active === 'review' && (
-              <ReviewRequestComposer />
             )}
             {active === 'report' && (
               <MonthEndReport />

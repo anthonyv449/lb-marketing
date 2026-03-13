@@ -43,9 +43,10 @@ def upsert_task(
     engagement_id: int,
     task_id: str,
     payload: schemas.TaskToggle,
+    current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    _get_engagement_or_403(engagement_id, db)
+    _get_engagement_or_403(engagement_id, current_user, db)
 
     task_state = (
         db.query(models.TaskState)
@@ -73,15 +74,43 @@ def upsert_task(
     return task_state
 
 
-@router.delete("")
-def reset_tasks(
+@router.delete("/{task_id}")
+def delete_task(
     engagement_id: int,
+    task_id: str,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     _get_engagement_or_403(engagement_id, current_user, db)
-    db.query(models.TaskState).filter(
-        models.TaskState.engagement_id == engagement_id
-    ).delete()
+    deleted = (
+        db.query(models.TaskState)
+        .filter(
+            models.TaskState.engagement_id == engagement_id,
+            models.TaskState.task_id == task_id,
+        )
+        .delete()
+    )
     db.commit()
-    return {"reset": True, "engagement_id": engagement_id}
+    return {"deleted": deleted > 0, "task_id": task_id}
+
+
+@router.post("/batch-delete")
+def batch_delete_tasks(
+    engagement_id: int,
+    payload: schemas.TaskBatchDelete,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _get_engagement_or_403(engagement_id, current_user, db)
+    if not payload.task_ids:
+        return {"deleted": 0, "task_ids": []}
+    deleted = (
+        db.query(models.TaskState)
+        .filter(
+            models.TaskState.engagement_id == engagement_id,
+            models.TaskState.task_id.in_(payload.task_ids),
+        )
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return {"deleted": deleted, "task_ids": payload.task_ids}

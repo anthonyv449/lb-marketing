@@ -1,6 +1,6 @@
 
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field, field_serializer
 from enum import Enum
 
@@ -306,6 +306,10 @@ class TaskStateOut(BaseModel):
 
 class TaskToggle(BaseModel):
     completed: bool
+
+
+class TaskBatchDelete(BaseModel):
+    task_ids: List[str] = Field(..., min_length=1, description="Task IDs to delete")
 
 
 class AuditReportCreate(BaseModel):

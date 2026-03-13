@@ -41,8 +41,10 @@ function resolveEngagementId(input) {
 }
 
 async function requestJson(path, options = {}) {
+  const { signal, ...rest } = options;
   const response = await fetch(`${BASE_URL}${path}`, {
-    ...options,
+    ...rest,
+    signal,
     headers: {
       'Content-Type': 'application/json',
       ...getAuthHeaders(),
@@ -274,32 +276,49 @@ export async function fetchClientIntake(clientId) {
   };
 }
 
-// PUT /demo/engagements/{engagementId}/tasks/{taskId}
-export async function saveTaskState(clientId, checkedMap) {
-  const engagementId = resolveEngagementId(clientId);
-  if (!engagementId) throw new Error('Missing engagement ID for task state persistence.');
-
-  const entries = Object.entries(checkedMap || {});
-  await Promise.all(
-    entries.map(([taskId, completed]) =>
-      requestJson(`/demo/engagements/${engagementId}/tasks/${encodeURIComponent(taskId)}`, {
-        method: 'PUT',
-        body: JSON.stringify({ completed: !!completed }),
-      }),
-    ),
-  );
-  return { ok: true };
-}
-
 // GET /demo/engagements/{engagementId}/tasks
-export async function fetchTaskState(clientId) {
+export async function fetchTaskState(clientId, signal) {
   const engagementId = resolveEngagementId(clientId);
   if (!engagementId) return {};
-  const rows = await requestJson(`/demo/engagements/${engagementId}/tasks`);
+  const rows = await requestJson(`/demo/engagements/${engagementId}/tasks`, { signal });
   return rows.reduce((acc, row) => {
     acc[row.task_id] = !!row.completed;
     return acc;
   }, {});
+}
+
+// PUT /demo/engagements/{engagementId}/tasks/{taskId}
+export async function upsertTask(clientId, taskId, completed) {
+  const engagementId = resolveEngagementId(clientId);
+  if (!engagementId) throw new Error('Missing engagement ID for task state persistence.');
+  return requestJson(
+    `/demo/engagements/${engagementId}/tasks/${encodeURIComponent(taskId)}`,
+    {
+      method: 'PUT',
+      body: JSON.stringify({ completed: !!completed }),
+    },
+  );
+}
+
+// DELETE /demo/engagements/{engagementId}/tasks/{taskId}
+export async function deleteTask(clientId, taskId) {
+  const engagementId = resolveEngagementId(clientId);
+  if (!engagementId) throw new Error('Missing engagement ID for task delete.');
+  return requestJson(
+    `/demo/engagements/${engagementId}/tasks/${encodeURIComponent(taskId)}`,
+    { method: 'DELETE' },
+  );
+}
+
+// POST /demo/engagements/{engagementId}/tasks/batch-delete
+export async function batchDeleteTasks(clientId, taskIds) {
+  const engagementId = resolveEngagementId(clientId);
+  if (!engagementId) throw new Error('Missing engagement ID for batch delete.');
+  if (!taskIds || taskIds.length === 0) return { deleted: 0, task_ids: [] };
+  return requestJson(`/demo/engagements/${engagementId}/tasks/batch-delete`, {
+    method: 'POST',
+    body: JSON.stringify({ task_ids: taskIds }),
+  });
 }
 
 // GET /demo/engagements/{engagementId}/reviews
