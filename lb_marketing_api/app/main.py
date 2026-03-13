@@ -9,13 +9,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from .config import settings
-from .db import Base, engine, get_db
+from .db import Base, engine, get_db, SessionLocal
 from . import models
 from .auth import get_current_user
 from .routers import businesses, locations, social_profiles, campaigns, assets, posts, oauth, auth, pdfs, ai
+from .routers.demo import engagements as demo_engagements
+from .routers.demo import tasks as demo_tasks
+from .routers.demo import audit as demo_audit
+from .routers.demo import reviews as demo_reviews
+from .routers.demo import month_end as demo_month_end
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+
+def _seed_dev_test_user(db: Session) -> None:
+    """Seed test user (email=test, password=test) with admin permissions. Development only."""
+    existing = db.query(models.User).filter(models.User.email == "test").first()
+    if existing:
+        return
+    test_user = models.User(email="test", full_name="Test Admin")
+    test_user.set_password("test")
+    db.add(test_user)
+    db.commit()
+    logger.info("Development: Seeded test user (email=test, password=test)")
 
 
 @asynccontextmanager
@@ -28,6 +45,15 @@ async def lifespan(app: FastAPI):
     if settings.APP_ENV == "development":
         Base.metadata.create_all(bind=engine)
         logger.info("Development: Tables created via create_all()")
+        # Seed test user (test/test) with admin permissions — development only
+        try:
+            db = SessionLocal()
+            try:
+                _seed_dev_test_user(db)
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Development seed (test user) skipped: {e}")
     
     yield  # Application runs here
     
@@ -158,3 +184,8 @@ app.include_router(posts.router)
 app.include_router(oauth.router)
 app.include_router(pdfs.router)
 app.include_router(ai.router)
+app.include_router(demo_engagements.router)
+app.include_router(demo_tasks.router)
+app.include_router(demo_audit.router)
+app.include_router(demo_reviews.router)
+app.include_router(demo_month_end.router)

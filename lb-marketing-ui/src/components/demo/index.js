@@ -3,6 +3,7 @@
  * Import any component or API function from this single entry point.
  */
 
+export { default as ClientEngagementsTable } from './ClientEngagementsTable';
 export { default as ClientIntake }          from './ClientIntake';
 export { default as TaskTracker }           from './TaskTracker';
 export { default as AuditBuilder }          from './AuditBuilder';

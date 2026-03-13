@@ -3,10 +3,11 @@
  * computes deltas with colour coding, and generates a copyable report.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { COLORS, FONTS, baseStyles } from '../shared/styles';
 import { Field, Input, Textarea, Divider, CopyBtn, PreviewBox, Label } from '../shared/FormFields';
 import { calcDelta, formatReportText } from './MonthEndReport.utils';
+import { fetchMonthEndReport, saveMonthEndReport } from '../api/client';
 
 const EMPTY = {
   businessName: '', reportPeriod: '',
@@ -46,14 +47,41 @@ function MetricRow({ label, beforeKey, afterKey, form, set, invert = false }) {
   );
 }
 
-export default function MonthEndReport() {
+export default function MonthEndReport({ clientId }) {
   const [form, setForm] = useState({ ...EMPTY });
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    if (!clientId) return;
+    fetchMonthEndReport(clientId).then((data) => {
+      if (data) setForm((prev) => ({ ...prev, ...data }));
+    }).catch(() => {
+      // Non-blocking load failure; keep local editing available.
+    });
+  }, [clientId]);
 
   const set = useCallback((key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
   }, []);
 
   const report = useMemo(() => formatReportText(form), [form]);
+
+  const handleSave = async () => {
+    if (!clientId) {
+      setSaveError('Set an engagement ID to persist this report.');
+      return;
+    }
+    setSaveError('');
+    try {
+      const savedReport = await saveMonthEndReport(clientId, form);
+      setForm((prev) => ({ ...prev, ...savedReport }));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (error) {
+      setSaveError(error.message || 'Failed to save month-end report.');
+    }
+  };
 
   return (
     <div style={baseStyles.sectionBox}>
@@ -127,6 +155,25 @@ export default function MonthEndReport() {
       <div style={{ marginTop: 16 }}>
         <CopyBtn text={report} label="Copy Report" />
       </div>
+
+      <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+        <button
+          type="button"
+          onClick={handleSave}
+          style={{
+            ...baseStyles.btn,
+            ...(saved ? baseStyles.btnSaved : baseStyles.btnPrimary),
+          }}
+        >
+          {saved ? '✓ Saved' : 'Save Report'}
+        </button>
+      </div>
+
+      {saveError && (
+        <div style={{ fontFamily: FONTS.mono, fontSize: '0.7rem', color: COLORS.red, marginTop: 8 }}>
+          {saveError}
+        </div>
+      )}
     </div>
   );
 }

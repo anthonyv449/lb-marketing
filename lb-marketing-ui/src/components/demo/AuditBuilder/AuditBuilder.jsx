@@ -3,10 +3,11 @@
  * then generates a live preview and supports copy-to-clipboard.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { COLORS, FONTS, baseStyles } from '../shared/styles';
 import { Field, Input, Textarea, Select, Divider, CopyBtn, PreviewBox } from '../shared/FormFields';
 import { generateAuditReport } from './AuditBuilder.preview';
+import { fetchAuditReport, saveAuditReport } from '../api/client';
 
 const GBP_STATUS_OPTIONS = [
   { value: 'claimed_complete',   label: 'Claimed — Complete' },
@@ -25,14 +26,48 @@ const EMPTY = {
   notes: '',
 };
 
-export default function AuditBuilder({ businessName = '' }) {
+export default function AuditBuilder({ businessName = '', clientId }) {
   const [form, setForm] = useState({ ...EMPTY, businessName });
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    if (!businessName) return;
+    setForm((prev) => ({ ...prev, businessName }));
+  }, [businessName]);
+
+  useEffect(() => {
+    if (!clientId) return;
+    fetchAuditReport(clientId).then((data) => {
+      if (data) {
+        setForm((prev) => ({ ...prev, ...data, businessName: prev.businessName }));
+      }
+    }).catch(() => {
+      // Non-blocking: keep the form usable even when fetch fails.
+    });
+  }, [clientId]);
 
   const set = useCallback((key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
   }, []);
 
   const report = useMemo(() => generateAuditReport(form), [form]);
+
+  const handleSave = async () => {
+    if (!clientId) {
+      setSaveError('Set an engagement ID to persist this report.');
+      return;
+    }
+    setSaveError('');
+    try {
+      const savedReport = await saveAuditReport(clientId, form);
+      setForm((prev) => ({ ...prev, ...savedReport, businessName: prev.businessName }));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (error) {
+      setSaveError(error.message || 'Failed to save audit report.');
+    }
+  };
 
   return (
     <div style={baseStyles.sectionBox}>
@@ -134,6 +169,25 @@ export default function AuditBuilder({ businessName = '' }) {
       <div style={{ marginTop: 16 }}>
         <CopyBtn text={report} label="Copy Report" />
       </div>
+
+      <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+        <button
+          type="button"
+          onClick={handleSave}
+          style={{
+            ...baseStyles.btn,
+            ...(saved ? baseStyles.btnSaved : baseStyles.btnPrimary),
+          }}
+        >
+          {saved ? '✓ Saved' : 'Save Audit'}
+        </button>
+      </div>
+
+      {saveError && (
+        <div style={{ fontFamily: FONTS.mono, fontSize: '0.7rem', color: COLORS.red, marginTop: 8 }}>
+          {saveError}
+        </div>
+      )}
     </div>
   );
 }

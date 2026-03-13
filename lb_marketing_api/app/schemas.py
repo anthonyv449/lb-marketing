@@ -39,6 +39,12 @@ class BusinessCreate(BaseModel):
     phone: Optional[str] = None
     website: Optional[str] = None
 
+class BusinessUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    website: Optional[str] = None
+
 class BusinessOut(BaseModel):
     id: int
     name: str
@@ -206,3 +212,291 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+# ---------------------------------------------------------------------------
+# Demo module schemas
+# ---------------------------------------------------------------------------
+
+class DemoEngagementQuickStart(BaseModel):
+    """Optional body for POST /demo/engagements/new. Creates Business + Engagement in one call."""
+    business_name: Optional[str] = "New Client"
+
+
+class ClientEngagementCreate(BaseModel):
+    business_id: int
+    contact_name: Optional[str] = None
+    industry: Optional[str] = None
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    website: Optional[str] = None
+    gbp_account_id: Optional[str] = None
+    gbp_location_id: Optional[str] = None
+    gbp_access: Optional[str] = None
+    start_type: Optional[str] = None
+    current_rating: Optional[float] = None
+    review_count: Optional[int] = None
+    main_goal: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ClientEngagementUpdate(BaseModel):
+    contact_name: Optional[str] = None
+    industry: Optional[str] = None
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    website: Optional[str] = None
+    gbp_account_id: Optional[str] = None
+    gbp_location_id: Optional[str] = None
+    gbp_access: Optional[str] = None
+    start_type: Optional[str] = None
+    current_rating: Optional[float] = None
+    review_count: Optional[int] = None
+    main_goal: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ClientEngagementOut(BaseModel):
+    id: int
+    user_id: int
+    business_id: int
+    contact_name: Optional[str] = None
+    industry: Optional[str] = None
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    website: Optional[str] = None
+    gbp_account_id: Optional[str] = None
+    gbp_location_id: Optional[str] = None
+    gbp_access: Optional[str] = None
+    start_type: Optional[str] = None
+    current_rating: Optional[float] = None
+    review_count: Optional[int] = None
+    main_goal: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+
+    class Config:
+        from_attributes = True
+
+
+class TaskStateOut(BaseModel):
+    id: int
+    engagement_id: int
+    task_id: str
+    completed: bool
+    completed_at: Optional[datetime] = None
+
+    @field_serializer('completed_at')
+    def serialize_completed_at(self, dt: Optional[datetime], _info) -> Optional[str]:
+        if dt is None:
+            return None
+        return serialize_datetime_utc(dt)
+
+    class Config:
+        from_attributes = True
+
+
+class TaskToggle(BaseModel):
+    completed: bool
+
+
+class AuditReportCreate(BaseModel):
+    auditor: Optional[str] = None
+    date_delivered: Optional[str] = None
+    gbp_status: Optional[str] = None
+    gbp_photos: Optional[str] = None
+    gbp_rating: Optional[float] = None
+    gbp_reviews: Optional[int] = None
+    rank_term_1: Optional[str] = None
+    rank_position_1: Optional[int] = None
+    rank_term_2: Optional[str] = None
+    rank_position_2: Optional[int] = None
+    website_score: Optional[str] = None
+    citation_notes: Optional[str] = None
+    priority_issue_1: Optional[str] = None
+    priority_issue_2: Optional[str] = None
+    priority_issue_3: Optional[str] = None
+    quick_win_1: Optional[str] = None
+    quick_win_2: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AuditReportUpdate(BaseModel):
+    auditor: Optional[str] = None
+    date_delivered: Optional[str] = None
+    gbp_status: Optional[str] = None
+    gbp_photos: Optional[str] = None
+    gbp_rating: Optional[float] = None
+    gbp_reviews: Optional[int] = None
+    rank_term_1: Optional[str] = None
+    rank_position_1: Optional[int] = None
+    rank_term_2: Optional[str] = None
+    rank_position_2: Optional[int] = None
+    website_score: Optional[str] = None
+    citation_notes: Optional[str] = None
+    priority_issue_1: Optional[str] = None
+    priority_issue_2: Optional[str] = None
+    priority_issue_3: Optional[str] = None
+    quick_win_1: Optional[str] = None
+    quick_win_2: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AuditReportOut(BaseModel):
+    id: int
+    engagement_id: int
+    auditor: Optional[str] = None
+    date_delivered: Optional[str] = None
+    gbp_status: Optional[str] = None
+    gbp_photos: Optional[str] = None
+    gbp_rating: Optional[float] = None
+    gbp_reviews: Optional[int] = None
+    rank_term_1: Optional[str] = None
+    rank_position_1: Optional[int] = None
+    rank_term_2: Optional[str] = None
+    rank_position_2: Optional[int] = None
+    website_score: Optional[str] = None
+    citation_notes: Optional[str] = None
+    priority_issue_1: Optional[str] = None
+    priority_issue_2: Optional[str] = None
+    priority_issue_3: Optional[str] = None
+    quick_win_1: Optional[str] = None
+    quick_win_2: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+
+    class Config:
+        from_attributes = True
+
+
+class ReviewRecordOut(BaseModel):
+    id: int
+    engagement_id: int
+    gbp_review_id: Optional[str] = None
+    reviewer_name: Optional[str] = None
+    review_text: Optional[str] = None
+    star_rating: Optional[str] = None
+    review_published_at: Optional[datetime] = None
+    has_reply: bool
+    reply_text: Optional[str] = None
+    reply_generated_by: Optional[str] = None
+    reply_posted_at: Optional[datetime] = None
+    created_at: datetime
+
+    @field_serializer('review_published_at', 'reply_posted_at')
+    def serialize_optional_datetime(self, dt: Optional[datetime], _info) -> Optional[str]:
+        if dt is None:
+            return None
+        return serialize_datetime_utc(dt)
+
+    @field_serializer('created_at')
+    def serialize_created_at(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+
+    class Config:
+        from_attributes = True
+
+
+class AutoReplyRequest(BaseModel):
+    tone: str = "warm"
+    dry_run: bool = False
+
+
+class AutoReplyResultItem(BaseModel):
+    review_id: int
+    gbp_review_id: Optional[str] = None
+    reviewer: str
+    review_snippet: str
+    generated_reply: Optional[str] = None
+    posted: bool
+    saved: bool
+    error: Optional[str] = None
+
+
+class AutoReplyResult(BaseModel):
+    processed: int
+    succeeded: int
+    failed: int
+    dry_run: bool
+    results: list[AutoReplyResultItem]
+
+
+class MonthEndReportCreate(BaseModel):
+    period: Optional[str] = None
+    rank_term_1: Optional[str] = None
+    rank_before_1: Optional[int] = None
+    rank_after_1: Optional[int] = None
+    rank_term_2: Optional[str] = None
+    rank_before_2: Optional[int] = None
+    rank_after_2: Optional[int] = None
+    reviews_before: Optional[int] = None
+    reviews_after: Optional[int] = None
+    rating_before: Optional[float] = None
+    rating_after: Optional[float] = None
+    profile_views_before: Optional[int] = None
+    profile_views_after: Optional[int] = None
+    gbp_changes: Optional[str] = None
+    highlights: Optional[str] = None
+    next_month_plan: Optional[str] = None
+
+
+class MonthEndReportUpdate(BaseModel):
+    period: Optional[str] = None
+    rank_term_1: Optional[str] = None
+    rank_before_1: Optional[int] = None
+    rank_after_1: Optional[int] = None
+    rank_term_2: Optional[str] = None
+    rank_before_2: Optional[int] = None
+    rank_after_2: Optional[int] = None
+    reviews_before: Optional[int] = None
+    reviews_after: Optional[int] = None
+    rating_before: Optional[float] = None
+    rating_after: Optional[float] = None
+    profile_views_before: Optional[int] = None
+    profile_views_after: Optional[int] = None
+    gbp_changes: Optional[str] = None
+    highlights: Optional[str] = None
+    next_month_plan: Optional[str] = None
+
+
+class MonthEndReportOut(BaseModel):
+    id: int
+    engagement_id: int
+    period: Optional[str] = None
+    rank_term_1: Optional[str] = None
+    rank_before_1: Optional[int] = None
+    rank_after_1: Optional[int] = None
+    rank_term_2: Optional[str] = None
+    rank_before_2: Optional[int] = None
+    rank_after_2: Optional[int] = None
+    reviews_before: Optional[int] = None
+    reviews_after: Optional[int] = None
+    rating_before: Optional[float] = None
+    rating_after: Optional[float] = None
+    profile_views_before: Optional[int] = None
+    profile_views_after: Optional[int] = None
+    gbp_changes: Optional[str] = None
+    highlights: Optional[str] = None
+    next_month_plan: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    @field_serializer('created_at', 'updated_at')
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        return serialize_datetime_utc(dt)
+
+    class Config:
+        from_attributes = True
