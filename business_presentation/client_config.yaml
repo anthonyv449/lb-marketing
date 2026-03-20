@@ -1,0 +1,126 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# LB Marketing — Client Pitch Deck Configuration
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# HOW TO USE:
+#   1. Fill in every field below for your client
+#   2. Run:  python build_deck.py
+#   3. The .pptx will be saved to the output_filename path below
+#
+# TIPS:
+#   - Use null (no quotes) to leave a field blank
+#   - For vertical, set exactly ONE to true and the rest to false
+#   - Competitor rows: add/remove entries under competitors (max 5 looks best)
+#   - current_state and opportunity values support any short string
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+# ── Output ────────────────────────────────────────────────────────────────────
+output_filename: "LB_Marketing_Pitch_[ClientName].pptx"
+# Use [ClientName] as a placeholder — it will be replaced with client.name
+
+
+# ── Your Agency Details (Slide 2, 12) ─────────────────────────────────────────
+agency:
+  name: "LB Marketing"
+  tagline: "Local Digital Marketing — Results in 30 Days"
+  location: "San Francisco, CA"
+  presenter_name: "[Your Name]"
+  presenter_email: "[your@email.com]"
+  presenter_phone: "[Phone Number]"
+  website: "lbmarketing.com"
+
+
+# ── Client Details (Slide 1, 3, 4, 7) ─────────────────────────────────────────
+client:
+  name: "Sunrise Salon & Spa"
+  city_state: "San Francisco, CA"
+  date: "March 2026"
+
+  # Archetype: set ONE to true
+  archetype_established_invisible: false
+  archetype_present_underperforming: true
+  archetype_mixed: false
+
+
+# ── Vertical (Slide 6) ────────────────────────────────────────────────────────
+# Set exactly ONE to true — the other two panels will be hidden
+vertical:
+  salons_spas: true
+  legal_professional: false
+  home_services: false
+
+
+# ── Pricing (Slide 10) ────────────────────────────────────────────────────────
+pricing:
+  month1_price: "$1,500"
+  growth_price: "$2,500/mo"
+  scale_price: "$4,000/mo"
+
+
+# ── Current State Audit (Slide 3 — left panel) ────────────────────────────────
+# Use any short descriptive string for each value
+current_state:
+  gbp_status: "Claimed — incomplete"           # e.g. "Not claimed", "Incomplete", "Claimed"
+  star_rating: "3.8 ★"
+  review_count: "14 reviews"
+  map_pack_rank: "Not ranked"
+  website: "Outdated — no booking link"
+  citation_consistency: "Inconsistent (3 variations found)"
+  last_review_response: "Never"
+
+
+# ── Opportunity Analysis (Slide 3 — right panel) ──────────────────────────────
+opportunity:
+  map_pack_opportunity: "4 nearby competitors not optimised"
+  review_gap: "Top competitor has 87 reviews vs. your 14"
+  keyword_gap: "'hair salon San Francisco' — not in top 10"
+  profile_completion: "Estimated 55% complete"
+  review_velocity: "Averaging 1 review/month — room to 10×"
+  unanswered_reviews: "6 reviews with no owner response"
+  quick_win_potential: "HIGH — GBP + reviews can move in 30 days"
+
+# One-sentence key insight shown in the callout at the bottom of Slide 4
+competitor_key_insight: >
+  You have the fewest reviews of any competitor in this list, but your average
+  rating is competitive — a focused review campaign can close the gap within 30 days.
+
+
+# ── Local Competitor Table (Slide 4) ─────────────────────────────────────────
+# Add up to 5 competitors (including your client as the first row)
+# Fields: name, google_rating, review_count, map_pack, gbp_complete, website
+competitors:
+  - name: "Sunrise Salon & Spa"      # ← always your client first
+    google_rating: "3.8 ★"
+    review_count: "14"
+    map_pack: "No"
+    gbp_complete: "55%"
+    website: "Yes"
+
+  - name: "The Glow Studio"
+    google_rating: "4.6 ★"
+    review_count: "87"
+    map_pack: "Yes"
+    gbp_complete: "90%"
+    website: "Yes"
+
+  - name: "Luxe Hair & Beauty"
+    google_rating: "4.2 ★"
+    review_count: "43"
+    map_pack: "Yes"
+    gbp_complete: "70%"
+    website: "No"
+
+  - name: "Bella Salon SF"
+    google_rating: "4.0 ★"
+    review_count: "31"
+    map_pack: "No"
+    gbp_complete: "60%"
+    website: "Yes"
+
+  - name: "Zen Beauty Bar"
+    google_rating: "4.4 ★"
+    review_count: "22"
+    map_pack: "No"
+    gbp_complete: "45%"
+    website: "No"

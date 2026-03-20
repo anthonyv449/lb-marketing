@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { COLORS, FONTS, baseStyles } from '../shared/styles';
-import { fetchBusinesses } from '../api/client';
+import { fetchEngagements } from '../api/client';
 
 function formatDate(isoStr) {
   if (!isoStr) return '—';
@@ -17,14 +17,14 @@ function formatDate(isoStr) {
   }
 }
 
-function formatContact(business) {
-  if (business.email) return business.email;
-  if (business.phone) return business.phone;
+function formatContact(engagement) {
+  if (engagement.email) return engagement.email;
+  if (engagement.phone) return engagement.phone;
   return '—';
 }
 
 export default function ClientEngagementsTable({ onSelectClient, refreshTrigger }) {
-  const [businesses, setBusinesses] = useState([]);
+  const [engagements, setEngagements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
@@ -33,9 +33,9 @@ export default function ClientEngagementsTable({ onSelectClient, refreshTrigger 
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchBusinesses()
+    fetchEngagements()
       .then((data) => {
-        if (!cancelled) setBusinesses(Array.isArray(data) ? data : []);
+        if (!cancelled) setEngagements(Array.isArray(data) ? data : []);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load');
@@ -85,7 +85,7 @@ export default function ClientEngagementsTable({ onSelectClient, refreshTrigger 
         Select a client to view their task tracker and delivery tools.
       </p>
 
-      {businesses.length === 0 ? (
+      {engagements.length === 0 ? (
         <p style={{ fontFamily: FONTS.body, color: COLORS.muted, fontSize: '1rem' }}>
           No client engagements yet. Add clients via the Business API or Client Intake.
         </p>
@@ -101,7 +101,7 @@ export default function ClientEngagementsTable({ onSelectClient, refreshTrigger 
               </tr>
             </thead>
             <tbody>
-              {businesses.map((row) => (
+              {engagements.map((row) => (
                 <tr
                   key={row.id}
                   onClick={() => handleRowClick(row)}
@@ -113,7 +113,7 @@ export default function ClientEngagementsTable({ onSelectClient, refreshTrigger 
                     background: hoveredId === row.id ? `${COLORS.accent}14` : 'transparent',
                   }}
                 >
-                  <td style={tdStyle}>{row.name || '—'}</td>
+                  <td style={tdStyle}>{row.business_name || '—'}</td>
                   <td style={tdStyle}>{formatContact(row)}</td>
                   <td style={tdStyle}>
                     {row.website ? (

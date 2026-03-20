@@ -7,7 +7,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { COLORS, FONTS, baseStyles } from '../shared/styles';
 import { Field, Input, Textarea, Divider, CopyBtn, PreviewBox, Label } from '../shared/FormFields';
 import { calcDelta, formatReportText } from './MonthEndReport.utils';
-import { fetchMonthEndReport, saveMonthEndReport } from '../api/client';
+import { fetchMonthEndReport, saveMonthEndReport, fetchAuditReport } from '../api/client';
 
 const EMPTY = {
   businessName: '', reportPeriod: '',
@@ -47,19 +47,39 @@ function MetricRow({ label, beforeKey, afterKey, form, set, invert = false }) {
   );
 }
 
-export default function MonthEndReport({ clientId }) {
+export default function MonthEndReport({ clientId, businessName = '' }) {
   const [form, setForm] = useState({ ...EMPTY });
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     if (!clientId) return;
-    fetchMonthEndReport(clientId).then((data) => {
-      if (data) setForm((prev) => ({ ...prev, ...data }));
+    Promise.all([
+      fetchMonthEndReport(clientId),
+      fetchAuditReport(clientId),
+    ]).then(([reportData, auditData]) => {
+      if (reportData) {
+        // Saved report — use it; businessName comes from prop (not stored in report)
+        setForm({ ...EMPTY, businessName, ...reportData });
+      } else if (auditData) {
+        // No saved report — seed "before" values from audit
+        setForm({
+          ...EMPTY,
+          businessName,
+          keyword1: auditData.keyword1 || '',
+          kw1Before: auditData.position1 || '',
+          keyword2: auditData.keyword2 || '',
+          kw2Before: auditData.position2 || '',
+          reviewsBefore: auditData.reviewCount || '',
+          ratingBefore: auditData.starRating || '',
+        });
+      } else {
+        setForm((prev) => ({ ...prev, businessName }));
+      }
     }).catch(() => {
-      // Non-blocking load failure; keep local editing available.
+      setForm((prev) => ({ ...prev, businessName }));
     });
-  }, [clientId]);
+  }, [clientId, businessName]);
 
   const set = useCallback((key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));

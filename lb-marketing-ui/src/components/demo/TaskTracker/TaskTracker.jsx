@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { COLORS, FONTS, baseStyles } from '../shared/styles';
 import { WEEKS, VERTICAL_EXTRAS } from './TaskTracker.data';
 import useTaskState from '../hooks/useTaskState';
@@ -49,6 +50,32 @@ export default function TaskTracker({ vertical, clientId }) {
   const activeData = WEEKS.find((w) => w.week === activeWeek);
   const activeStat = weekStats.find((s) => s.week === activeWeek);
   const showExtras = extras && extras.weeks.includes(activeWeek);
+
+  function exportToExcel() {
+    const rows = [];
+    for (const w of WEEKS) {
+      for (const task of w.tasks) {
+        rows.push({ Week: w.label, Theme: w.theme, Task: task.text, Critical: task.critical ? 'Yes' : '', Status: checked[task.id] ? 'Done' : 'Pending' });
+      }
+      if (extras && extras.weeks.includes(w.week)) {
+        for (const item of extras.items) {
+          rows.push({ Week: w.label, Theme: `${w.theme} (${extras.label})`, Task: item.text, Critical: '', Status: checked[item.id] ? 'Done' : 'Pending' });
+        }
+      }
+    }
+    const summary = [
+      ['Section', 'Progress', 'Count'],
+      ['Overall', `${overallPct}%`, `${overallDone}/${allIds.length} tasks`],
+      ...weekStats.map((s) => {
+        const w = WEEKS.find((wk) => wk.week === s.week);
+        return [w.label, `${s.pct}%`, `${s.done}/${s.total} tasks`];
+      }),
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Tasks');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'Summary');
+    XLSX.writeFile(wb, 'task-tracker-export.xlsx');
+  }
 
   const tabBase = {
     ...baseStyles.btn,
@@ -150,7 +177,10 @@ export default function TaskTracker({ vertical, clientId }) {
         </div>
       )}
 
-      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <button type="button" onClick={exportToExcel} style={{ ...baseStyles.btn, ...baseStyles.btnSecondary, fontSize: '0.68rem' }}>
+          Export Excel
+        </button>
         <button type="button" onClick={reset} style={{ ...baseStyles.btn, ...baseStyles.btnSecondary, fontSize: '0.68rem' }}>
           Reset All
         </button>

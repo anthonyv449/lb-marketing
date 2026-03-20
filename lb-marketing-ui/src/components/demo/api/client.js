@@ -7,6 +7,11 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const DEFAULT_ENGAGEMENT_ID = import.meta.env.VITE_DEMO_ENGAGEMENT_ID;
 
+// GET /demo/engagements
+export async function fetchEngagements() {
+  return requestJson('/demo/engagements', { method: 'GET' });
+}
+
 // GET /businesses
 export async function fetchBusinesses() {
   const url = BASE_URL ? `${BASE_URL}/businesses` : '/businesses';
@@ -149,6 +154,9 @@ function toAuditPayload(data) {
     gbp_photos: data.gbpPhotos || null,
     gbp_rating: data.starRating === '' ? null : Number(data.starRating),
     gbp_reviews: data.reviewCount === '' ? null : Number(data.reviewCount),
+    yelp_status: data.yelpStatus || null,
+    yelp_rating: data.yelpRating === '' ? null : Number(data.yelpRating),
+    yelp_reviews: data.yelpReviewCount === '' ? null : Number(data.yelpReviewCount),
     rank_term_1: data.keyword1 || null,
     rank_position_1: data.position1 === '' ? null : Number(data.position1),
     rank_term_2: data.keyword2 || null,
@@ -172,6 +180,9 @@ function fromAuditPayload(data) {
     gbpPhotos: data.gbp_photos || '',
     starRating: data.gbp_rating == null ? '' : String(data.gbp_rating),
     reviewCount: data.gbp_reviews == null ? '' : String(data.gbp_reviews),
+    yelpStatus: data.yelp_status || '',
+    yelpRating: data.yelp_rating == null ? '' : String(data.yelp_rating),
+    yelpReviewCount: data.yelp_reviews == null ? '' : String(data.yelp_reviews),
     websiteScore: data.website_score || '',
     citationConsistency: data.citation_notes || '',
     keyword1: data.rank_term_1 || '',
