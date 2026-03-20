@@ -187,6 +187,10 @@ class ClientEngagement(Base):
     business = relationship("Business", back_populates="engagements")
     task_states = relationship("TaskState", back_populates="engagement", cascade="all, delete-orphan")
     audit_report = relationship("AuditReport", back_populates="engagement", uselist=False, cascade="all, delete-orphan")
+
+    @property
+    def business_name(self) -> str:
+        return self.business.name if self.business else ''
     review_records = relationship("ReviewRecord", back_populates="engagement", cascade="all, delete-orphan")
     month_end_report = relationship("MonthEndReport", back_populates="engagement", uselist=False, cascade="all, delete-orphan")
 
@@ -215,6 +219,9 @@ class AuditReport(Base):
     gbp_photos: Mapped[str | None] = mapped_column(String(100))
     gbp_rating: Mapped[float | None] = mapped_column(Numeric(3, 1))
     gbp_reviews: Mapped[int | None] = mapped_column(Integer)
+    yelp_status: Mapped[str | None] = mapped_column(String(100))
+    yelp_rating: Mapped[float | None] = mapped_column(Numeric(3, 1))
+    yelp_reviews: Mapped[int | None] = mapped_column(Integer)
     rank_term_1: Mapped[str | None] = mapped_column(String(255))
     rank_position_1: Mapped[int | None] = mapped_column(Integer)
     rank_term_2: Mapped[str | None] = mapped_column(String(255))

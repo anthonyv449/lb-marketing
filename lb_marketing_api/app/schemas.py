@@ -262,6 +262,7 @@ class ClientEngagementOut(BaseModel):
     id: int
     user_id: int
     business_id: int
+    business_name: Optional[str] = None
     contact_name: Optional[str] = None
     industry: Optional[str] = None
     city: Optional[str] = None
@@ -319,6 +320,9 @@ class AuditReportCreate(BaseModel):
     gbp_photos: Optional[str] = None
     gbp_rating: Optional[float] = None
     gbp_reviews: Optional[int] = None
+    yelp_status: Optional[str] = None
+    yelp_rating: Optional[float] = None
+    yelp_reviews: Optional[int] = None
     rank_term_1: Optional[str] = None
     rank_position_1: Optional[int] = None
     rank_term_2: Optional[str] = None
@@ -340,6 +344,9 @@ class AuditReportUpdate(BaseModel):
     gbp_photos: Optional[str] = None
     gbp_rating: Optional[float] = None
     gbp_reviews: Optional[int] = None
+    yelp_status: Optional[str] = None
+    yelp_rating: Optional[float] = None
+    yelp_reviews: Optional[int] = None
     rank_term_1: Optional[str] = None
     rank_position_1: Optional[int] = None
     rank_term_2: Optional[str] = None
@@ -363,6 +370,9 @@ class AuditReportOut(BaseModel):
     gbp_photos: Optional[str] = None
     gbp_rating: Optional[float] = None
     gbp_reviews: Optional[int] = None
+    yelp_status: Optional[str] = None
+    yelp_rating: Optional[float] = None
+    yelp_reviews: Optional[int] = None
     rank_term_1: Optional[str] = None
     rank_position_1: Optional[int] = None
     rank_term_2: Optional[str] = None

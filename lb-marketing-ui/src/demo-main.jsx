@@ -268,7 +268,7 @@ function DemoToolkit() {
     setSelectedClient(client);
     setIntakeData((prev) => ({
       ...prev,
-      businessName: client?.name || prev.businessName,
+      businessName: client?.business_name || client?.name || prev.businessName,
       contactName: prev.contactName,
       email: client?.email || prev.email,
       phone: client?.phone || prev.phone,
@@ -365,7 +365,7 @@ function DemoToolkit() {
                 ← Back to list
               </button>
               <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '1rem', color: COLORS.muted }}>
-                {selectedClient.name}
+                {selectedClient.business_name || selectedClient.name}
               </span>
             </div>
 
@@ -403,10 +403,16 @@ function DemoToolkit() {
               />
             )}
             {active === 'audit' && (
-              <AuditBuilder businessName={intakeData.businessName || selectedClient.name || ''} />
+              <AuditBuilder
+                businessName={intakeData.businessName || selectedClient.business_name || selectedClient.name || ''}
+                clientId={selectedClient.id}
+              />
             )}
             {active === 'report' && (
-              <MonthEndReport />
+              <MonthEndReport
+                clientId={selectedClient.id}
+                businessName={intakeData.businessName || selectedClient.business_name || selectedClient.name || ''}
+              />
             )}
           </>
         )}

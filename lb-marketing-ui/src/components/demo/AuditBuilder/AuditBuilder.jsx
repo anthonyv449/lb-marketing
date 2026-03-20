@@ -16,9 +16,17 @@ const GBP_STATUS_OPTIONS = [
   { value: 'does_not_exist',     label: 'Does Not Exist' },
 ];
 
+const YELP_STATUS_OPTIONS = [
+  { value: 'not_present',        label: 'Not Present' },
+  { value: 'unclaimed',          label: 'Unclaimed' },
+  { value: 'claimed_incomplete', label: 'Claimed — Incomplete' },
+  { value: 'claimed_complete',   label: 'Claimed — Complete' },
+];
+
 const EMPTY = {
   businessName: '', auditedBy: '', dateDelivered: '',
   gbpStatus: '', gbpPhotos: '', starRating: '', reviewCount: '',
+  yelpStatus: '', yelpRating: '', yelpReviewCount: '',
   websiteScore: '', citationConsistency: '',
   keyword1: '', position1: '', keyword2: '', position2: '',
   issue1: '', issue2: '', issue3: '',
@@ -115,6 +123,20 @@ export default function AuditBuilder({ businessName = '', clientId }) {
 
         <Field label="Citation Consistency" htmlFor="ab-citation">
           <Input id="ab-citation" value={form.citationConsistency} onChange={set('citationConsistency')} placeholder="e.g. 70% consistent" />
+        </Field>
+
+        <Divider />
+
+        <Field label="Yelp Status" htmlFor="ab-yelp-status">
+          <Select id="ab-yelp-status" value={form.yelpStatus} onChange={set('yelpStatus')} options={YELP_STATUS_OPTIONS} placeholder="Select status" />
+        </Field>
+
+        <Field label="Yelp Rating" htmlFor="ab-yelp-rating">
+          <Input id="ab-yelp-rating" value={form.yelpRating} onChange={set('yelpRating')} placeholder="e.g. 3.5" />
+        </Field>
+
+        <Field label="Yelp Review Count" htmlFor="ab-yelp-reviews">
+          <Input id="ab-yelp-reviews" value={form.yelpReviewCount} onChange={set('yelpReviewCount')} placeholder="e.g. 18" />
         </Field>
 
         <Divider />

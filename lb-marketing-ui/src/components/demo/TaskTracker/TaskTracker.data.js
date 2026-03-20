@@ -15,6 +15,7 @@ export const WEEKS = [
       { id: 'w1_collect_emails',        text: 'Collect customer email list',          critical: true },
       { id: 'w1_audit_gbp',            text: 'Audit Google Business Profile',        critical: false },
       { id: 'w1_audit_listings',        text: 'Audit other local listings',           critical: false },
+      { id: 'w1_audit_yelp',           text: 'Audit Yelp listing (status, rating, review count)', critical: false },
       { id: 'w1_review_reviews',        text: 'Review existing reviews',              critical: false },
       { id: 'w1_local_rankings',        text: 'Check local search rankings',          critical: false },
       { id: 'w1_competitor_gap',        text: 'Competitor gap analysis',              critical: false },
@@ -34,6 +35,7 @@ export const WEEKS = [
       { id: 'w2_quickwin_seo',          text: 'Apply quick-win SEO improvements',             critical: false },
       { id: 'w2_services_section',      text: 'Build GBP services section',                   critical: false },
       { id: 'w2_citation_corrections',  text: 'Correct citation inconsistencies',             critical: false },
+      { id: 'w2_yelp_claim',            text: 'Claim / optimise Yelp listing',                critical: false },
     ],
   },
   {
