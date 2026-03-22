@@ -16,7 +16,7 @@
 
 
 # ── Output ────────────────────────────────────────────────────────────────────
-output_filename: "LB_Marketing_Pitch_[ClientName].pptx"
+output_filename: "LB_Marketing_Pitch_Fellom_Solorio_Law_Offices.pptx"
 # Use [ClientName] as a placeholder — it will be replaced with client.name
 
 
@@ -25,15 +25,15 @@ agency:
   name: "LB Marketing"
   tagline: "Local Digital Marketing — Results in 30 Days"
   location: "San Francisco, CA"
-  presenter_name: "[Your Name]"
-  presenter_email: "[your@email.com]"
-  presenter_phone: "[Phone Number]"
-  website: "lbmarketing.com"
+  presenter_name: "Anthony Omar Valenzuela"
+  presenter_email: "anthony@lbmarketing.com"
+  presenter_phone: "323-787-5671"
+  website: "Under Development"
 
 
 # ── Client Details (Slide 1, 3, 4, 7) ─────────────────────────────────────────
 client:
-  name: "Sunrise Salon & Spa"
+  name: "Fellom & Solorio Law Offices"
   city_state: "San Francisco, CA"
   date: "March 2026"
 
@@ -46,81 +46,75 @@ client:
 # ── Vertical (Slide 6) ────────────────────────────────────────────────────────
 # Set exactly ONE to true — the other two panels will be hidden
 vertical:
-  salons_spas: true
-  legal_professional: false
+  salons_spas: false
+  legal_professional: true
   home_services: false
 
 
 # ── Pricing (Slide 10) ────────────────────────────────────────────────────────
 pricing:
-  month1_price: "$1,500"
-  growth_price: "$2,500/mo"
-  scale_price: "$4,000/mo"
+  month1_price: "$200"
+  growth_price: "$1,500/mo"
+  scale_price: "$2,000/mo"
 
 
 # ── Current State Audit (Slide 3 — left panel) ────────────────────────────────
 # Use any short descriptive string for each value
 current_state:
   gbp_status: "Claimed — incomplete"           # e.g. "Not claimed", "Incomplete", "Claimed"
-  star_rating: "3.8 ★"
-  review_count: "14 reviews"
+  star_rating: "4.7 ★"
+  review_count: "32 reviews"
   map_pack_rank: "Not ranked"
-  website: "Outdated — no booking link"
-  citation_consistency: "Inconsistent (3 variations found)"
+  website: "Yes"
+  citation_consistency: "Consistent"
   last_review_response: "Never"
 
 
 # ── Opportunity Analysis (Slide 3 — right panel) ──────────────────────────────
 opportunity:
-  map_pack_opportunity: "4 nearby competitors not optimised"
-  review_gap: "Top competitor has 87 reviews vs. your 14"
-  keyword_gap: "'hair salon San Francisco' — not in top 10"
-  profile_completion: "Estimated 55% complete"
+  map_pack_opportunity: "4 nearby competitors are optimised"
+  review_gap: "Top competitor has 1441 reviews vs. your 32"
+  keyword_gap: "'immigration law office San Francisco' — not in top 10"
+  profile_completion: "Not complete"
   review_velocity: "Averaging 1 review/month — room to 10×"
-  unanswered_reviews: "6 reviews with no owner response"
+  unanswered_reviews: "32 reviews with no owner response"
   quick_win_potential: "HIGH — GBP + reviews can move in 30 days"
 
 # One-sentence key insight shown in the callout at the bottom of Slide 4
-competitor_key_insight: >
-  You have the fewest reviews of any competitor in this list, but your average
-  rating is competitive — a focused review campaign can close the gap within 30 days.
+competitor_key_insight: "Fellom & Solorio Law Offices's rating (4.7) trails the competitor average (4.8). 4 of 4 competitors have more reviews (top: 1441 vs 32) — growing review volume is the fastest path to closing this gap."
 
 
 # ── Local Competitor Table (Slide 4) ─────────────────────────────────────────
 # Add up to 5 competitors (including your client as the first row)
 # Fields: name, google_rating, review_count, map_pack, gbp_complete, website
 competitors:
-  - name: "Sunrise Salon & Spa"      # ← always your client first
-    google_rating: "3.8 ★"
-    review_count: "14"
+  - name: "Fellom & Solorio Law Offices"
+    google_rating: "4.7"
+    review_count: "32"
     map_pack: "No"
-    gbp_complete: "55%"
+    gbp_complete: "No"
     website: "Yes"
-
-  - name: "The Glow Studio"
-    google_rating: "4.6 ★"
-    review_count: "87"
+  - name: "KPB Immigration Law Firm"
+    google_rating: "4.9"
+    review_count: "1441"
     map_pack: "Yes"
-    gbp_complete: "90%"
+    gbp_complete: "Yes"
     website: "Yes"
-
-  - name: "Luxe Hair & Beauty"
-    google_rating: "4.2 ★"
-    review_count: "43"
+  - name: "Law Offices of Shamieh, Shamieh & Ternieden"
+    google_rating: "4.8"
+    review_count: "418"
     map_pack: "Yes"
-    gbp_complete: "70%"
-    website: "No"
-
-  - name: "Bella Salon SF"
-    google_rating: "4.0 ★"
-    review_count: "31"
-    map_pack: "No"
-    gbp_complete: "60%"
+    gbp_complete: "Yes"
     website: "Yes"
-
-  - name: "Zen Beauty Bar"
-    google_rating: "4.4 ★"
-    review_count: "22"
+  - name: "Kolomejec Law"
+    google_rating: "4.9"
+    review_count: "364"
     map_pack: "No"
-    gbp_complete: "45%"
-    website: "No"
+    gbp_complete: "No"
+    website: "Yes"
+  - name: "Silveira Law"
+    google_rating: "4.8"
+    review_count: "247"
+    map_pack: "No"
+    gbp_complete: "No"
+    website: "Yes"

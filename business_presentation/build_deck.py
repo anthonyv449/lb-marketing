@@ -597,48 +597,123 @@ def slide_11_roadmap(prs, cfg, BLANK):
     sl = prs.slides.add_slide(BLANK)
     add_rect(sl, 0, 0, W, H, OFF_WHITE)
     nav_bar(sl, "The Roadmap", ag["name"])
+
     add_text(sl, "Month 1 Is Just the Beginning",
              Inches(0.4), Inches(0.65), Inches(9.2), Inches(0.5),
              size=24, bold=True, color=NAVY)
-    add_text(sl, "Leading indicators (Month 1) unlock lagging outcomes (Months 2-4+). Here's the full picture.",
-             Inches(0.4), Inches(1.1), Inches(9.2), Inches(0.3),
-             size=10, color=MID_GRAY, italic=True)
-    timeline = [
-        ("Month 1 (Demo)", TEAL, "Fast Foundation", [
-            "GBP fully optimised", "Review velocity started",
-            "Ranking baseline set", "Before/after report",
-        ]),
-        ("Month 2", NAVY, "Content & SEO Engine", [
-            "Regular posting & blog", "Ongoing local SEO",
-            "Organic traffic grows", "Monthly reporting",
-        ]),
-        ("Month 3", TEAL, "Referral & Partnerships", [
-            "Referral programme", "Local biz partnerships",
-            "Word-of-mouth amplified", "Review momentum",
-        ]),
-        ("Month 4+", NAVY, "Full-Funnel Visibility", [
-            "Paid campaign testing", "Full-funnel dashboard",
-            "Search to enquiry to client", "Quarterly strategy",
-        ]),
+    add_text(sl,
+        "Each phase builds on the last. Leading indicators in Month 1 unlock every service that follows.",
+        Inches(0.4), Inches(1.08), Inches(9.2), Inches(0.28),
+        size=10, color=MID_GRAY, italic=True)
+
+    phases = [
+        (
+            "Month 1", "Demo",
+            TEAL,
+            "Fast Foundation",
+            [
+                (NAVY,                       "GBP",       "Google Business Profile fully optimised"),
+                (TEAL,                       "REVIEWS",   "Review generation campaign (5-10 target)"),
+                (NAVY,                       "AUDIT",     "Full digital presence audit & report"),
+                (TEAL,                       "RESPONSES", "All existing reviews responded to"),
+            ]
+        ),
+        (
+            "Month 2", "",
+            NAVY,
+            "Website + Content",
+            [
+                (TEAL,                       "WEBSITE",   "Custom website designed & launched"),
+                (NAVY,                       "SEO",       "On-page SEO applied from day one"),
+                (TEAL,                       "SOCIAL",    "Social media posts begin (4x / month)"),
+                (NAVY,                       "CONTENT",   "Blog & local content programme starts"),
+            ]
+        ),
+        (
+            "Month 3", "",
+            TEAL,
+            "Reviews + Surveys",
+            [
+                (NAVY,                       "ANALYSIS",  "Ongoing review monitoring & analysis"),
+                (TEAL,                       "SURVEYS",   "Customer satisfaction surveys launched"),
+                (NAVY,                       "SOCIAL+",   "Social posting scaled (8x / month)"),
+                (TEAL,                       "REFERRALS", "Referral & local partnership outreach"),
+            ]
+        ),
+        (
+            "Month 4", "",
+            NAVY,
+            "Paid Ads Launch",
+            [
+                (TEAL,                       "PAID ADS",  "Google & Meta paid campaigns launched"),
+                (NAVY,                       "TARGETING", "Hyper-local audience targeting set up"),
+                (TEAL,                       "RETARGET",  "Website visitor retargeting enabled"),
+                (NAVY,                       "FUNNEL",    "Full search-to-booking funnel tracked"),
+            ]
+        ),
+        (
+            "Month 5+", "Ongoing",
+            RGBColor(0x7C, 0x3A, 0xED),
+            "Scale & Optimise",
+            [
+                (NAVY,                       "REPORTING", "Quarterly strategy & performance review"),
+                (TEAL,                       "ADS OPT",   "Ad spend optimised for lowest cost/lead"),
+                (NAVY,                       "SURVEYS+",  "Survey insights fed back into campaigns"),
+                (RGBColor(0x7C, 0x3A, 0xED), "DASHBOARD", "Live performance dashboard access"),
+            ]
+        ),
     ]
-    for i, (period, bg, subtitle, pts) in enumerate(timeline):
-        cx = Inches(0.35) + i * Inches(2.4)
-        cy = Inches(1.45)
-        cw = Inches(2.2)
-        add_rect(sl, cx, cy, cw, Inches(0.55), bg)
-        add_text(sl, period, cx + Inches(0.08), cy + Inches(0.05),
-                 cw - Inches(0.1), Inches(0.48), size=11, bold=True, color=WHITE)
-        add_rect(sl, cx, cy + Inches(0.55), cw, Inches(3.35), WHITE)
-        add_text(sl, subtitle, cx + Inches(0.1), cy + Inches(0.62),
-                 cw - Inches(0.15), Inches(0.3), size=10, bold=True, color=NAVY)
-        for bi, pt in enumerate(pts):
-            add_text(sl, f"  {pt}",
-                     cx + Inches(0.1), cy + Inches(0.98) + bi * Inches(0.58),
-                     cw - Inches(0.15), Inches(0.5), size=9, color=CHARCOAL)
-        if i < 3:
-            add_rect(sl, cx + cw, cy + Inches(0.2), Inches(0.2), Inches(0.22), OFF_WHITE)
-            add_text(sl, ">", cx + cw, cy + Inches(0.2),
-                     Inches(0.2), Inches(0.22), size=12, color=TEAL, align=PP_ALIGN.CENTER)
+
+    N   = len(phases)
+    CW  = Inches(9.3 / N - 0.06)
+    GAP = Inches(0.075)
+    CY  = Inches(1.45)
+    CH  = Inches(3.85)
+
+    for i, (period, badge, hdr_bg, subtitle, features) in enumerate(phases):
+        cx = Inches(0.35) + i * (CW + GAP)
+
+        add_rect(sl, cx, CY, CW, CH, WHITE)
+        add_rect(sl, cx, CY, CW, Inches(0.52), hdr_bg)
+        add_text(sl, period,
+                 cx + Inches(0.08), CY + Inches(0.04),
+                 CW - Inches(0.1), Inches(0.26),
+                 size=11, bold=True, color=WHITE)
+
+        if badge:
+            bw = Inches(0.65)
+            add_rect(sl, cx + CW - bw - Inches(0.06), CY + Inches(0.07),
+                     bw, Inches(0.2), AMBER)
+            add_text(sl, badge.upper(),
+                     cx + CW - bw - Inches(0.06), CY + Inches(0.075),
+                     bw, Inches(0.18),
+                     size=6, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
+
+        add_text(sl, subtitle,
+                 cx + Inches(0.08), CY + Inches(0.3),
+                 CW - Inches(0.12), Inches(0.22),
+                 size=9, bold=False, color=ICE)
+
+        for fi, (badge_bg, badge_lbl, desc) in enumerate(features):
+            fy = CY + Inches(0.62) + fi * Inches(0.78)
+            pill_w = Inches(0.72)
+            add_rect(sl, cx + Inches(0.1), fy, pill_w, Inches(0.22), badge_bg)
+            add_text(sl, badge_lbl,
+                     cx + Inches(0.1), fy + Inches(0.02),
+                     pill_w, Inches(0.19),
+                     size=6, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+            add_text(sl, desc,
+                     cx + Inches(0.1), fy + Inches(0.24),
+                     CW - Inches(0.2), Inches(0.46),
+                     size=8, color=CHARCOAL, wrap=True)
+
+        if i < N - 1:
+            arrow_x = cx + CW + GAP * 0.1
+            arrow_y = CY + Inches(0.18)
+            add_text(sl, ">", arrow_x, arrow_y,
+                     GAP * 0.8, Inches(0.22),
+                     size=9, bold=True, color=TEAL, align=PP_ALIGN.CENTER)
+
     footer(sl, f"Confidential  -  {ag['name']}  -  {ag['location']}")
 
 
