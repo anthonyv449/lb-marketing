@@ -1,0 +1,612 @@
+================================================================================
+LB MARKETING — SERVICE TIERS OVERVIEW
+Local Digital Marketing for Small & Medium Businesses
+San Francisco, CA
+================================================================================
+
+Last updated: March 2026
+Prepared by: Anthony Omar Valenzuela | anthony@lbmarketing.com | 323-787-5671
+
+--------------------------------------------------------------------------------
+ABOUT THIS DOCUMENT
+--------------------------------------------------------------------------------
+
+This document provides a full breakdown of LB Marketing's four service tiers:
+Month 1 Demo, Starter, Growth, and Premium. It is intended for internal use,
+client-facing proposals, and onboarding reference.
+
+Each tier builds on the last. Clients begin with the Month 1 Demo — a low-risk,
+no-contract engagement designed to demonstrate measurable results before any
+ongoing commitment is made. From there, clients move into Starter, Growth, or
+Premium based on their goals, competitive landscape, and appetite for growth.
+
+All tiers are month-to-month. There are no lock-in contracts at any level.
+
+--------------------------------------------------------------------------------
+A NOTE ON PRICING
+--------------------------------------------------------------------------------
+
+Month 1 Demo:   $200 (one-time)
+Starter:        $750/month
+Growth:         $1,500/month
+Premium:        $2,500/month
+
+At the Premium tier, ad spend (Google Ads and/or Meta Ads) is billed separately
+and paid directly by the client to Google/Meta. The $2,500/month covers
+management, strategy, creative, and optimisation only — not media spend.
+
+Website maintenance is included at all ongoing tiers (Starter and above) where
+the client has an existing website and grants CMS access. This covers content
+updates only (hours, services, team info, etc.) — not design changes, new page
+builds, or full redesigns. Those are scoped and priced separately as needed.
+
+--------------------------------------------------------------------------------
+HOW CLIENTS TYPICALLY PROGRESS THROUGH TIERS
+--------------------------------------------------------------------------------
+
+Month 1:   Demo engagement. We audit, optimise GBP, respond to reviews, and
+           run the first review generation campaign. The client receives a
+           before/after report at the end of Week 4. They then decide whether
+           to continue.
+
+Month 2+:  Most clients enter Starter after Month 1. This maintains the gains
+           from Month 1 and keeps the business active, visible, and growing at
+           a manageable pace.
+
+Month 2-3: Clients ready for content, SEO expansion, and social media move to
+           Growth. This is the most common long-term tier for established
+           businesses that want to compete on search.
+
+Month 4+:  Clients ready for paid advertising, full-funnel tracking, and
+           maximum market presence move to Premium. This tier is best suited
+           for businesses generating enough revenue to justify ad spend and
+           looking to dominate their local market.
+
+Clients can upgrade, downgrade, or cancel at any time with no penalties.
+
+================================================================================
+TIER 1 — MONTH 1 DEMO
+Price: $200 (one-time, no ongoing commitment)
+================================================================================
+
+PURPOSE
+-------
+The Month 1 Demo is the entry point for every new client. It is designed to
+deliver tangible, measurable results within 30 days — before the client commits
+to any ongoing retainer. The goal is to earn trust through visible work, not
+promises.
+
+This is not a discovery phase or a setup fee. Real deliverables are produced
+and results are documented in a formal before/after report at the end of Week 4.
+
+WEEK-BY-WEEK BREAKDOWN
+-----------------------
+
+Week 1 — Full Digital Presence Audit
+  A comprehensive review of the client's entire online presence including:
+  - Google Business Profile (GBP): completeness, categories, photos, services,
+    description, hours, and Q&A section
+  - Yelp profile: accuracy, photos, categories, and NAP consistency
+  - Website: basic SEO health, mobile responsiveness, contact information
+  - Review landscape: total count, star rating, response history, and velocity
+  - Local keyword rankings: where the business currently ranks for its top
+    practice-area + city search terms
+  - Competitor comparison: top 4-5 local competitors benchmarked across
+    reviews, GBP completion, and map pack presence
+
+  Output: Written audit report delivered by Day 5. Prioritised action list
+  included — items ranked by impact and speed of implementation.
+
+Week 2 — GBP Optimisation + Review Response
+  Full optimisation of the Google Business Profile:
+  - Every field completed: business name, address, phone, website, hours,
+    holiday hours, business description (keyword-informed), categories
+    (primary and secondary), services section, attributes, and photos
+  - All unanswered reviews responded to professionally — both positive and
+    negative. Responses are written in the client's voice, not generic.
+  - GBP is one of the highest-leverage local SEO assets available. A fully
+    optimised profile is the foundation for map pack entry.
+
+Week 3 — Review Generation Campaign + First Content
+  - Personalised SMS and/or email review request messages drafted and sent
+    to a list of recent clients/customers provided by the business
+  - Messages are written per-vertical — tone and context appropriate for
+    legal, salon, or home services clients
+  - Target: 5–10 new Google reviews in Month 1
+  - Review gating is never used (prohibited by Google policy)
+  - Yelp is NOT used for review solicitation (against Yelp policy) — treated
+    as a citation and visibility asset only
+  - First vertical-specific content published (GBP post and/or website update)
+
+Week 4 — Month-End Before/After Report
+  A structured report documenting the starting point vs. end of Month 1:
+  - GBP profile completion score (before vs. after)
+  - Review count and star rating (before vs. after)
+  - GBP profile views and search impressions
+  - Local keyword ranking baseline for top 5 terms
+  - Review response rate (before vs. after)
+  - Summary of work completed and recommended next steps
+
+KEY OUTCOMES BY END OF MONTH 1
+-------------------------------
+  - GBP fully optimised and active
+  - All existing reviews responded to
+  - 5–10 new Google reviews targeted
+  - Local ranking baseline established
+  - Client has a clear picture of where they stand and what comes next
+
+WHAT THE CLIENT NEEDS TO PROVIDE
+---------------------------------
+  - Owner-level GBP access (takes approximately 2 minutes to grant)
+  - 20-minute onboarding call in Week 1 to confirm keywords, priorities,
+    and reporting preferences
+  - A list of recent customer names and contact info for the review campaign
+    (Week 3). LB Marketing drafts all messages — the client provides the list.
+
+TERMS
+-----
+  - $200 one-time fee
+  - No contract, no ongoing commitment
+  - If the client is not satisfied by end of Week 4, they walk away.
+    No penalties, no awkward conversations.
+
+================================================================================
+TIER 2 — STARTER
+Price: $750/month | Recommended entry point after Month 1
+================================================================================
+
+PURPOSE
+-------
+Starter is the "maintain and build momentum" tier. It is designed for businesses
+that have completed Month 1 and want to keep the gains growing without a large
+monthly investment. The focus is on consistency — keeping the GBP active, reviews
+flowing, and the business visible month over month.
+
+Starter is best understood as a transition tier. Most clients will stay here for
+2–4 months before the results are compelling enough to justify moving to Growth.
+Clients who are happy with steady, low-effort visibility maintenance may stay at
+this tier indefinitely.
+
+WHAT'S INCLUDED
+---------------
+
+GBP Management
+  - 4 posts per month published directly to the client's Google Business Profile
+  - Post types rotate across: service/practice area updates, social proof
+    (showcasing client outcomes or reviews), offers or promotions, and
+    educational tips relevant to the vertical
+  - Post copy is keyword-informed — written to reinforce the client's target
+    local search terms naturally (e.g., "immigration lawyer San Francisco")
+  - Images sourced or designed in Canva to accompany each post
+  - Profile kept current — hours, services, photos, and attributes updated
+    as the business changes
+  - Posting cadence: approximately weekly, evenly spaced through the month
+
+  WHY THIS MATTERS: Google rewards active profiles. Regular posts signal to
+  Google's algorithm that the business is engaged and relevant, which supports
+  map pack visibility. Posts also appear directly in the business listing when
+  someone searches — a client who sees fresh, relevant content is more likely
+  to call than one who sees a stale profile with no activity.
+
+Yelp Management (where applicable)
+  - Yelp profile accuracy maintained: business name, address, phone number,
+    website URL, categories, hours, and photos kept consistent and current
+  - Yelp is treated as a citation and NAP consistency asset — NOT as a review
+    growth channel (Yelp's policies prohibit soliciting reviews)
+  - Any business-owner responses to Yelp reviews handled as needed
+
+  WHY THIS MATTERS: Yelp still ranks well in Google search results for local
+  queries, particularly for legal and home services. An inconsistent or
+  incomplete Yelp profile creates conflicting signals that can suppress local
+  search rankings.
+
+Review Management
+  - Monthly review request campaign (drip model): personalised SMS and/or email
+    messages sent to new clients/customers after each transaction or matter
+    closes — not a one-time blast, but a steady stream each month
+  - All new Google and Yelp reviews responded to on the client's behalf
+    within a timely manner. Responses are written in the client's voice.
+    Positive reviews are acknowledged warmly; negative reviews are handled
+    professionally and constructively.
+
+  WHY THIS MATTERS: Review velocity — the rate at which new reviews arrive —
+  is a key local ranking signal. A business that consistently gains 3–5 new
+  reviews per month will compound ahead of competitors who plateau. Review
+  responses also signal to Google that the business is active and to prospective
+  clients that the business cares about its reputation.
+
+Citation Management
+  - Quarterly audit of the client's listings across the top 20–30 local
+    directories including: Google, Yelp, Bing Places, Apple Maps, Yellow Pages,
+    Facebook, Foursquare, BBB, and vertical-specific directories
+  - NAP (Name, Address, Phone) inconsistencies identified and corrected
+  - New citations submitted to high-trust directories where the business
+    is missing
+
+  WHY THIS MATTERS: Inconsistent NAP data across directories confuses Google
+  and suppresses local rankings. A citation audit ensures the business is
+  accurately represented everywhere it appears online.
+
+Website Maintenance (where applicable, content only)
+  - Client's website kept current with any changes to business information:
+    hours, service offerings, team members, contact details, location info
+  - Requires CMS access (Webflow, WordPress, Squarespace, Wix, etc.)
+  - Scope: content maintenance only. Does not include design changes,
+    new page builds, new features, or structural changes to the site.
+    Those are scoped and priced separately.
+
+Keyword Tracking
+  - 5 target keywords tracked monthly (practice area + city combinations
+    agreed at onboarding, e.g., "immigration lawyer San Francisco")
+  - Monthly ranking movement reported — positions tracked, gains and drops
+    flagged with context
+
+Reporting & Communication
+  - Monthly performance report delivered at the end of each month covering:
+    GBP profile views, search impressions, review count and rating trend,
+    keyword rank movement for all 5 tracked terms, and a summary of work
+    completed that month
+  - 30-minute monthly check-in call to walk through the report, discuss
+    priorities for the coming month, and flag any issues or opportunities
+  - Account communication: marketing-related requests (e.g., update business
+    hours, swap a GBP photo, adjust post copy) handled via email within
+    48 business hours. This channel covers operational marketing requests
+    only — not legal, business, or strategic consulting.
+
+TERMS
+-----
+  - $750/month
+  - Month-to-month, cancel anytime
+  - Website maintenance included only where CMS access is granted
+
+================================================================================
+TIER 3 — GROWTH
+Price: $1,500/month | Recommended from Month 2–3 onwards
+================================================================================
+
+PURPOSE
+-------
+Growth is the content and SEO expansion tier. It is for businesses that have
+demonstrated momentum from Month 1 and Starter, and are ready to actively
+compete on search — not just maintain their presence but grow it. The focus
+shifts from maintenance to visibility expansion: more keywords, more content,
+more social presence, and a structured referral strategy.
+
+This is the most common long-term tier for established businesses across all
+three LB Marketing verticals.
+
+WHAT'S INCLUDED
+---------------
+
+Everything in Starter, plus:
+
+Content Programme — Blog Posts
+  - 2 blog posts per month, 500–800 words each
+  - Written using AI-assisted drafting with human review and editing for
+    accuracy, tone, and vertical relevance
+  - Topics are researched and selected based on local keyword opportunity —
+    what potential clients are actually searching for in the business's area
+  - Examples by vertical:
+      Legal:       "What to do if you receive a deportation notice in California"
+                   "How long does a green card application take in 2025?"
+      Salons:      "Best haircuts for fine hair — what to ask your stylist"
+                   "What to expect at your first Balayage appointment"
+      Home Svc:    "How to know if your electrical panel needs replacing"
+                   "5 signs your plumbing needs attention before winter"
+  - Published directly to the client's website where CMS access is available
+    and a blog section exists (or can be created). If CMS access is not
+    available, content is repurposed across GBP posts and social media instead.
+  - Blog content is included where it provides SEO value. For some verticals
+    (e.g., salons), social content may be prioritised over blog posts depending
+    on what drives the most impact for the client.
+
+  WHY THIS MATTERS: Blog content builds topical authority — Google recognises
+  the business as a relevant, expert source for its practice area or service.
+  Each post targets long-tail keywords that the homepage doesn't rank for,
+  creating additional entry points from search. Over time, a library of
+  locally-relevant blog content compounds into a significant ranking and
+  traffic advantage.
+
+Social Media
+  - 8 posts per month published to the client's primary social platform
+  - Platform matched to vertical at onboarding:
+      Legal:        LinkedIn (professional audience, thought leadership)
+      Salons/Spas:  Instagram (visual content, before/after, promotions)
+      Home Services: Facebook and/or Nextdoor (local community, trust)
+  - Content mix: approximately 50% repurposed from the month's blog posts
+    (key points reformatted for social), 50% original social-first content
+    (behind-the-scenes, client outcomes, timely topics, promotions)
+  - All graphics designed in Canva using consistent branding per client —
+    colours, fonts, and visual style aligned to the business's identity
+  - Posting cadence: approximately 2 posts per week
+
+  WHY THIS MATTERS: Social media at this tier is not about vanity metrics —
+  it is about staying visible to existing and potential clients in the channels
+  they use daily. For a law firm, LinkedIn posts positioning the attorneys as
+  knowledgeable and accessible build referral relationships. For a salon,
+  Instagram content showing real results drives bookings.
+
+SEO — Expanded Keyword Tracking
+  - Keyword tracking expanded to 10–15 terms (up from 5 at Starter)
+  - Terms agreed at onboarding or quarterly review — covers primary service
+    areas, specific practice areas or service types, and city/neighbourhood
+    modifiers (e.g., "immigration lawyer SF", "visa application help San
+    Francisco", "DACA lawyer Bay Area")
+  - Monthly movement tracked and reported — ranking gains, drops, and new
+    keyword opportunities flagged with context and recommended action
+  - On-page SEO recommendations provided where keyword gaps are identified —
+    title tag updates, meta description improvements, heading structure fixes.
+    Implementation handled by LB Marketing where CMS access is available.
+
+Referral Strategy
+  - Each month, a list of 3–5 complementary local businesses or referral
+    sources is identified — organisations or professionals whose clients
+    regularly need what this business offers
+  - Examples by vertical:
+      Legal:        ESL schools, immigrant community organisations, HR
+                    departments at visa-sponsoring companies, notaries
+      Salons:       Wedding planners, photographers, nearby hotels,
+                    corporate HR for employee perks programmes
+      Home Svc:     Real estate agents, property managers, home inspectors,
+                    general contractors
+  - For each target, a ready-to-send outreach script is drafted — a short,
+    personalised message the client can send via email or LinkedIn
+  - LB Marketing handles all research and drafting. The client reviews and
+    sends the outreach. Execution is the client's responsibility; the strategy
+    and scripts are LB Marketing's deliverable.
+
+  WHY THIS MATTERS: Referral relationships are among the highest-ROI client
+  acquisition channels for local service businesses. A single real estate
+  agent who closes 3 homes per month and refers their buyers to a trusted
+  electrician can generate tens of thousands in annual revenue. This tier
+  systematises the outreach instead of leaving it to chance.
+
+Reporting Dashboard Access
+  - Access to LB Marketing's proprietary client reporting dashboard
+  - Shows real-time performance across GBP, reviews, keyword rankings,
+    and social engagement in one place
+  - STATUS: Coming Q2 2026. Until launch, all reporting is delivered via
+    the monthly written report and check-in call.
+
+Reporting & Communication
+  - Everything included in Starter reporting, plus:
+  - Social engagement metrics included in monthly report (reach, profile
+    visits, post interactions)
+  - Expanded keyword tracking across 10–15 terms
+  - 30-minute monthly strategy call — same format as Starter but agenda
+    expands to cover content performance, SEO movement, social results,
+    and referral pipeline. Ends with a next-month preview: content planned,
+    keywords being targeted, referral targets lined up.
+  - Account communication: marketing-related requests via email within
+    48 business hours
+
+TERMS
+-----
+  - $1,500/month
+  - Month-to-month, cancel anytime
+  - Blog publishing requires CMS access; content repurposed to social/GBP
+    where not available
+  - Dashboard access launching Q2 2026
+
+================================================================================
+TIER 4 — PREMIUM
+Price: $2,500/month | Available from Month 4+
+Ad spend billed separately — paid directly by client to Google and/or Meta
+================================================================================
+
+PURPOSE
+-------
+Premium is the full-funnel, maximum-presence tier. It is for businesses that
+have established a strong organic foundation through earlier tiers and are ready
+to layer in paid advertising to accelerate growth. At this level, every channel
+is active simultaneously — organic SEO, content, social, paid ads, and
+conversion optimisation — and performance is tracked across the entire journey
+from first search to closed client.
+
+This tier is best suited for businesses generating consistent revenue and
+looking to dominate their local market, not just participate in it.
+
+IMPORTANT: Ad spend is not included in the $2,500/month fee. The client pays
+Google and/or Meta directly for their ad budget. LB Marketing manages the
+campaigns, strategy, creative, and optimisation. This is the industry standard
+model and ensures full transparency — the client always knows exactly how much
+is being spent on ads vs. management.
+
+WHAT'S INCLUDED
+---------------
+
+Everything in Growth, plus:
+
+Paid Advertising Management
+  - Platform selection: Google Ads and/or Meta Ads (Facebook/Instagram).
+    Platform recommended based on vertical and client goals at onboarding:
+      Legal:        Google Search Ads strongly recommended — targets people
+                    actively searching for legal help (high intent)
+      Salons:       Meta Ads recommended — visual targeting, local audience
+                    reach, appointment booking campaigns
+      Home Svc:     Google Search Ads for high-intent queries ("emergency
+                    plumber near me"); Meta for awareness and retargeting
+    Client makes the final decision on which platform(s) to run.
+  - Full campaign setup including: campaign structure, ad groups, keyword
+    selection (Google) or audience targeting (Meta), ad copywriting, and
+    Canva-designed ad creative (images and/or static graphics)
+  - Ongoing monthly optimisation: bid strategy adjustments, underperforming
+    ads paused, audience segments refined, budget allocation reviewed
+  - All campaigns managed within the client's own Google Ads / Meta Business
+    Manager account — client retains full ownership and visibility at all times
+  - Monthly ad performance summary included in the monthly report: impressions,
+    clicks, cost per click, leads generated, and cost per lead
+
+  WHY THIS MATTERS: Organic SEO builds long-term visibility but takes time.
+  Paid ads deliver immediate, targeted exposure to people actively searching
+  for or interested in the business's services right now. Combined with the
+  organic foundation built in earlier tiers, paid ads close the gap between
+  visibility and booked clients.
+
+Conversion Rate Optimisation (CRO) — Dedicated Landing Pages
+  - A dedicated landing page is built for each paid ad campaign — traffic is
+    never sent to the homepage, which is a common and costly mistake
+  - Each landing page is purpose-built to convert a specific type of visitor:
+    clear headline matching the ad, concise description of the service,
+    trust signals (reviews, credentials, years in business), and a prominent
+    single CTA (call now, book a consultation, get a free quote)
+  - Built in the client's existing CMS (WordPress, Squarespace, Wix, etc.)
+    or in Webflow where no existing site is present
+  - Pages reviewed and refined quarterly based on performance data —
+    if a page has a high click rate but low conversions, it gets updated
+
+  WHY THIS MATTERS: Sending paid ad traffic to a generic homepage is one of
+  the most common ways agencies waste client ad spend. A dedicated landing
+  page with a single clear action can double or triple conversion rates
+  compared to a homepage. This is where the real ROI of paid ads is unlocked.
+
+Link Building
+  - Up to 5 link placements per month targeting authoritative local and
+    vertical-specific directories and publications
+  - Vertical-specific directory targets include:
+      Legal:        Avvo, Justia, FindLaw, Lawyers.com, Super Lawyers,
+                    Martindale-Hubbell, state bar directories
+      Salons/Spas:  StyleSeat, Vagaro, Salon Today, Beauty Launchpad
+      Home Svc:     Houzz, Angi (formerly Angie's List), HomeAdvisor,
+                    Thumbtack, NARI (for remodelers), NECA (for electricians)
+  - Local press outreach: pitching the client for features or mentions in
+    local SF publications, neighbourhood blogs, community organisations,
+    and local news outlets
+  - Note: "Up to 5 placements" reflects realistic capacity — directory
+    submissions are more predictable than press placements, which depend
+    on editorial interest and timing
+
+  WHY THIS MATTERS: Backlinks from authoritative, relevant sources are one
+  of the strongest signals Google uses to determine how trustworthy and
+  prominent a local business is. Directory links build baseline authority;
+  press placements and local citations build the kind of prominence that
+  separates map pack leaders from everyone else.
+
+AI Search Optimisation — AEO (Experimental)
+  - Content structured to improve the business's visibility in AI-generated
+    answers: Google AI Overviews, ChatGPT responses, Gemini recommendations,
+    and Perplexity citations for local queries
+  - Targets high-intent conversational queries like:
+      "Who is the best immigration lawyer in San Francisco?"
+      "What should I do if I get a deportation notice in California?"
+      "Which electrician in SF has the best reviews?"
+  - Applied to blog content and landing pages — structured with clear
+    question-and-answer formatting, authoritative citations, and schema
+    markup where applicable
+  - IMPORTANT: AEO is an emerging and evolving field. Best practices are
+    still being defined as AI search engines mature. This is included as an
+    experimental feature — LB Marketing will apply current best practices
+    but cannot guarantee specific AI placement outcomes.
+
+  WHY THIS MATTERS: AI-powered search is changing how people find local
+  businesses. Appearing in a ChatGPT or Gemini answer to a local legal
+  question is increasingly valuable — and most local competitors are not
+  thinking about this yet. Early investment in AEO-structured content builds
+  an advantage that will compound as AI search grows.
+
+Competitor Monitoring
+  - Monthly automated snapshot tracking the top 3–5 local competitors across:
+      - Google review count and star rating trend
+      - Map pack ranking for shared target keywords
+      - GBP activity (posting frequency, new photos, new services)
+      - Any significant changes to their online presence
+  - Included in the monthly report with a brief commentary on what the data
+    means for the client's positioning — is the gap closing, holding, or
+    widening?
+
+  WHY THIS MATTERS: Premium clients are investing in market dominance, not
+  just maintenance. Knowing how competitors are moving — and whether your
+  gains are pulling ahead of or tracking with the market — is essential
+  context for strategic decisions.
+
+Quarterly Strategy Document
+  - A formal written strategy document produced at the end of each quarter
+    (every 3 months)
+  - NOT a recap of the past 90 days — this is a forward-looking plan
+  - Contents:
+      - What is working and why (channels, content types, campaigns)
+      - What is being deprioritised or stopped and why
+      - Strategic priorities for the next quarter
+      - Specific KPI targets for the next 90 days (review count, keyword
+        positions, cost per lead, etc.)
+      - Any recommended changes to platform, budget, or channel mix
+  - Delivered as a written document prior to the quarterly strategy call
+    so the client can review it in advance
+
+  WHY THIS MATTERS: Most agencies do a quarterly call. A written document
+  forces rigour — every claim has to be defensible on paper, not just
+  explained verbally. It also gives the client something to reference,
+  share internally, and hold the agency accountable to.
+
+Reporting & Communication
+  - Everything in Growth reporting, plus:
+  - Ad performance metrics in monthly report (impressions, clicks, CPC,
+    leads, cost per lead, ROAS where trackable)
+  - Competitor snapshot in monthly report
+  - Quarterly strategy document (written, delivered before the quarterly call)
+  - 30-minute monthly strategy call with next-month preview
+  - Priority account communication: marketing-related requests handled within
+    24 business hours (vs. 48 hours at Starter and Growth)
+
+TERMS
+-----
+  - $2,500/month (management fee only)
+  - Ad spend billed separately — client pays Google/Meta directly
+  - Month-to-month, cancel anytime
+  - CMS access required for CRO landing pages; built in Webflow where
+    no existing site is present
+
+================================================================================
+QUICK COMPARISON TABLE
+================================================================================
+
+FEATURE                          STARTER    GROWTH     PREMIUM
+                                 $750/mo    $1,500/mo  $2,500/mo
+----------------------------------------------------------------
+GBP posts (per month)            4          4          4
+Yelp management                  Yes        Yes        Yes
+Review request campaign          Monthly    Monthly    Monthly
+Review response management       Yes        Yes        Yes
+Citation audit                   Quarterly  Quarterly  Quarterly
+Website maintenance              Yes*       Yes*       Yes*
+Keywords tracked                 5          10-15      10-15
+Blog posts (per month)           -          2          2
+Social posts (per month)         -          8          8
+Referral strategy + scripts      -          Yes        Yes
+Paid ads management              -          -          Yes
+CRO landing pages                -          -          Yes
+Link building (per month)        -          -          Up to 5
+AI search optimisation (AEO)     -          -          Experimental
+Competitor monitoring            -          -          Monthly
+Quarterly strategy document      -          -          Yes
+Reporting dashboard              -          Coming**   Coming**
+Monthly check-in call            30 min     30 min     30 min
+Email response time              48 hrs     48 hrs     24 hrs
+Contract                         None       None       None
+
+* Where CMS access is granted. Content maintenance only.
+** Reporting dashboard launching Q2 2026.
+
+================================================================================
+WEBSITE MANAGEMENT ADD-ON
+================================================================================
+
+Website work beyond content maintenance (new pages, redesigns, landing pages
+outside of paid ad campaigns, feature additions) is available as a separate
+add-on at any tier. Pricing is scoped per project based on the work required
+and the client's existing CMS or platform. Clients are never automatically
+enrolled in website work beyond the maintenance scope described above.
+
+================================================================================
+CONTACT
+================================================================================
+
+Anthony Omar Valenzuela
+Founder, LB Marketing
+anthony@lbmarketing.com
+323-787-5671
+San Francisco, CA
+
+================================================================================
+CONFIDENTIAL — LB MARKETING — FOR INTERNAL AND CLIENT USE ONLY
+================================================================================
