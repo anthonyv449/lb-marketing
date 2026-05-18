@@ -228,6 +228,81 @@
 
     .truncate { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+    .email-scrape-panel {
+      display: none;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .email-scrape-panel.active { display: block; }
+    .email-scrape-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .email-scrape-header h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 0;
+      flex: 1;
+      min-width: 160px;
+    }
+    .email-scrape-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .email-scrape-stats strong { color: var(--text); }
+    .email-scrape-stats .stat-found strong { color: var(--score-high); }
+    .progress-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+    .progress-fill.stopped { background: var(--score-med); }
+    .email-scrape-current {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      min-height: 1.2em;
+    }
+    .email-scrape-log {
+      max-height: 140px;
+      overflow-y: auto;
+      font-size: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+    }
+    .email-scrape-log .log-line { padding: 2px 0; }
+    .email-scrape-log .log-found { color: var(--score-high); }
+    .email-scrape-log .log-miss { color: var(--text-muted); }
+    .email-scrape-log .log-current { color: var(--primary); }
+    .email-scrape-log .log-stop { color: var(--score-med); }
+    .btn-stop {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-stop:hover:not(:disabled) { background: #c82333; }
+
     @media (max-width: 768px) {
       .form-row, .api-key-row { flex-direction: column; }
       .field { width: 100%; }
@@ -276,6 +351,13 @@
     </div>
     <div class="field">
       <label>&nbsp;</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--text);cursor:pointer;">
+        <input type="checkbox" id="scrape-emails" checked style="width:auto;" />
+        Scrape emails from websites
+      </label>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
       <button class="btn btn-primary" id="search-btn" onclick="runSearch()">
         <span id="search-btn-text">Search</span>
       </button>
@@ -294,6 +376,24 @@
     </div>
   </div>
 
+  <div class="email-scrape-panel" id="email-scrape-panel">
+    <div class="email-scrape-header">
+      <h3 id="email-scrape-title">Scraping emails from websites</h3>
+      <button type="button" class="btn btn-stop" id="stop-scrape-btn" onclick="stopEmailScrape()">Stop</button>
+    </div>
+    <div class="progress-track" aria-hidden="true">
+      <div class="progress-fill" id="email-scrape-progress-fill"></div>
+    </div>
+    <div class="email-scrape-stats">
+      <span><strong id="stat-done">0</strong> / <span id="stat-total">0</span> scraped</span>
+      <span class="stat-found"><strong id="stat-found">0</strong> emails found</span>
+      <span><strong id="stat-missed">0</strong> no email</span>
+      <span id="stat-skipped-wrap" style="display:none;"><strong id="stat-skipped">0</strong> skipped (no site)</span>
+    </div>
+    <div class="email-scrape-current" id="email-scrape-current"></div>
+    <div class="email-scrape-log" id="email-scrape-log" aria-live="polite"></div>
+  </div>
+
   <div class="card" style="padding:0; overflow-x:auto;">
     <table>
       <thead>
@@ -304,6 +404,7 @@
           <th onclick="sortBy('reviews')">Reviews <span class="sort-arrow" id="sort-reviews"></span></th>
           <th onclick="sortBy('website')">Website <span class="sort-arrow" id="sort-website"></span></th>
           <th onclick="sortBy('phone')">Phone <span class="sort-arrow" id="sort-phone"></span></th>
+          <th onclick="sortBy('email')">Email <span class="sort-arrow" id="sort-email"></span></th>
           <th onclick="sortBy('score')">Lead Score <span class="sort-arrow" id="sort-score"></span></th>
         </tr>
       </thead>
@@ -325,6 +426,19 @@
   let sortField = 'score';
   let sortAsc = false;
 
+  let emailScrapeAbort = false;
+  let emailScrapeController = null;
+  let emailScrapeLog = [];
+  const EMAIL_SCRAPE_LOG_MAX = 80;
+
+  const emailScrapeStats = {
+    total: 0,
+    done: 0,
+    found: 0,
+    missed: 0,
+    skipped: 0,
+  };
+
   function setSource(source) {
     currentSource = source;
     document.querySelectorAll('.toggle-group button').forEach(btn => {
@@ -344,6 +458,13 @@
     document.getElementById('error-banner').style.display = 'none';
   }
 
+  function showResultsArea() {
+    document.getElementById('results-area').style.display = 'block';
+    document.getElementById('empty-state').style.display = 'none';
+  }
+
+  const SCRAPE_FETCH_TIMEOUT_MS = 25000;
+
   function computeLeadScore(biz) {
     let weakSignals = 0;
     if (biz.rating != null && biz.rating < 4.2) weakSignals++;
@@ -359,6 +480,210 @@
 
   function setProgress(msg) {
     document.getElementById('progress-text').textContent = msg;
+  }
+
+  function shouldScrapeEmails() {
+    return document.getElementById('scrape-emails').checked;
+  }
+
+  function initResultFields(biz) {
+    biz.email = biz.email ?? null;
+    biz.emailSource = biz.emailSource ?? null;
+    return biz;
+  }
+
+  function isYelpUrl(url) {
+    if (!url) return false;
+    try { return new URL(url).hostname.toLowerCase().includes('yelp.com'); } catch { return url.includes('yelp.com'); }
+  }
+
+  function pickWebsite(...urls) {
+    for (const u of urls) {
+      if (u && !isYelpUrl(u)) return u;
+    }
+    return null;
+  }
+
+  function stopEmailScrape() {
+    emailScrapeAbort = true;
+    if (emailScrapeController) {
+      emailScrapeController.abort();
+    }
+    appendEmailScrapeLog('Stopped by user — showing results collected so far.', 'log-stop');
+    updateEmailScrapeUI(null, true);
+    document.getElementById('stop-scrape-btn').disabled = true;
+    setProgress('Email scrape stopped.');
+  }
+
+  function resetEmailScrapeState() {
+    emailScrapeAbort = false;
+    emailScrapeController = null;
+    emailScrapeLog = [];
+    emailScrapeStats.total = 0;
+    emailScrapeStats.done = 0;
+    emailScrapeStats.found = 0;
+    emailScrapeStats.missed = 0;
+    emailScrapeStats.skipped = 0;
+  }
+
+  function showEmailScrapePanel(show) {
+    document.getElementById('email-scrape-panel').classList.toggle('active', show);
+    document.getElementById('stop-scrape-btn').disabled = !show;
+  }
+
+  function appendEmailScrapeLog(message, className = '') {
+    emailScrapeLog.push({ message, className, at: Date.now() });
+    if (emailScrapeLog.length > EMAIL_SCRAPE_LOG_MAX) {
+      emailScrapeLog = emailScrapeLog.slice(-EMAIL_SCRAPE_LOG_MAX);
+    }
+    const logEl = document.getElementById('email-scrape-log');
+    logEl.innerHTML = emailScrapeLog
+      .map(entry => `<div class="log-line ${entry.className}">${esc(entry.message)}</div>`)
+      .join('');
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function updateEmailScrapeUI(currentRow, stopped = false) {
+    const { total, done, found, missed, skipped } = emailScrapeStats;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-found').textContent = found;
+    document.getElementById('stat-missed').textContent = missed;
+    document.getElementById('stat-skipped').textContent = skipped;
+    document.getElementById('stat-skipped-wrap').style.display = skipped > 0 ? 'inline' : 'none';
+
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const fill = document.getElementById('email-scrape-progress-fill');
+    fill.style.width = `${pct}%`;
+    fill.classList.toggle('stopped', stopped);
+
+    const title = document.getElementById('email-scrape-title');
+    if (stopped) {
+      title.textContent = `Email scrape stopped — ${found} found, ${done} of ${total} sites checked`;
+    } else if (done >= total && total > 0) {
+      title.textContent = `Email scrape complete — ${found} found of ${total} sites`;
+    } else {
+      title.textContent = 'Scraping emails from websites';
+    }
+
+    const currentEl = document.getElementById('email-scrape-current');
+    if (currentRow && !stopped && done < total) {
+      currentEl.textContent = `Now scraping: ${currentRow.name} (${hostOf(currentRow.website)})`;
+    } else if (stopped) {
+      currentEl.textContent = `Collected ${found} email${found !== 1 ? 's' : ''} so far. Results table updated below.`;
+    } else if (done >= total && total > 0) {
+      currentEl.textContent = `Done. ${found} email${found !== 1 ? 's' : ''} collected — see results table and log below.`;
+    } else {
+      currentEl.textContent = '';
+    }
+
+    const withEmail = results.filter(r => r.email);
+    document.getElementById('result-count').textContent =
+      `${results.length} result${results.length !== 1 ? 's' : ''}` +
+      (withEmail.length ? ` · ${withEmail.length} with email` : '');
+  }
+
+  async function scrapeEmailForRow(row, website, sourceLabel) {
+    if (!shouldScrapeEmails() || !website || emailScrapeAbort) return 'aborted';
+
+    const siteLabel = hostOf(website);
+    appendEmailScrapeLog(`Scraping ${siteLabel}…`, 'log-current');
+    updateEmailScrapeUI(row);
+
+    emailScrapeController = new AbortController();
+    const timeoutId = setTimeout(() => emailScrapeController.abort(), SCRAPE_FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(
+        `${PROXY}/scrape/email?url=${encodeURIComponent(website)}`,
+        { signal: emailScrapeController.signal },
+      );
+      clearTimeout(timeoutId);
+      if (emailScrapeAbort) return 'aborted';
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        emailScrapeStats.missed++;
+        appendEmailScrapeLog(`✗ ${row.name}: server error (${res.status})`, 'log-miss');
+        return 'error';
+      }
+      if (data.email) {
+        row.email = data.email;
+        row.emailSource = sourceLabel;
+        emailScrapeStats.found++;
+        appendEmailScrapeLog(`✓ ${row.name}: ${data.email}`, 'log-found');
+        return 'found';
+      }
+      emailScrapeStats.missed++;
+      appendEmailScrapeLog(`✗ ${row.name}: no email on ${siteLabel}`, 'log-miss');
+      return 'missed';
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError' || emailScrapeAbort) {
+        if (err.name === 'AbortError' && !emailScrapeAbort) {
+          emailScrapeStats.missed++;
+          appendEmailScrapeLog(`✗ ${row.name}: timed out (${siteLabel})`, 'log-miss');
+          return 'timeout';
+        }
+        return 'aborted';
+      }
+      emailScrapeStats.missed++;
+      appendEmailScrapeLog(`✗ ${row.name}: scrape failed (${siteLabel})`, 'log-miss');
+      return 'error';
+    } finally {
+      emailScrapeController = null;
+    }
+  }
+
+  async function enrichEmails(rows, sourceLabel) {
+    const toScrape = rows.filter(r => r.website && !isYelpUrl(r.website));
+    const skipped = rows.length - toScrape.length;
+
+    resetEmailScrapeState();
+    emailScrapeStats.total = toScrape.length;
+    emailScrapeStats.skipped = skipped;
+
+    showResultsArea();
+
+    if (toScrape.length === 0) {
+      showEmailScrapePanel(true);
+      appendEmailScrapeLog('No scrapable business websites in these results (Yelp-only or missing URLs).', 'log-miss');
+      updateEmailScrapeUI(null, false);
+      document.getElementById('stop-scrape-btn').disabled = true;
+      return;
+    }
+
+    showEmailScrapePanel(true);
+    document.getElementById('email-scrape-log').innerHTML = '';
+    appendEmailScrapeLog(`Starting email scrape for ${toScrape.length} website${toScrape.length !== 1 ? 's' : ''}…`);
+    if (skipped > 0) {
+      appendEmailScrapeLog(`${skipped} business${skipped !== 1 ? 'es' : ''} skipped (no website or Yelp-only).`, 'log-miss');
+    }
+    updateEmailScrapeUI(null);
+
+    for (let i = 0; i < toScrape.length; i++) {
+      if (emailScrapeAbort) break;
+
+      const row = toScrape[i];
+      setProgress(`Fetching emails (${i + 1}/${toScrape.length})…`);
+      await scrapeEmailForRow(row, row.website, sourceLabel);
+
+      emailScrapeStats.done = i + 1;
+      results = rows;
+      renderResults();
+      updateEmailScrapeUI(row, emailScrapeAbort);
+
+      if (emailScrapeAbort) break;
+    }
+
+    const stopped = emailScrapeAbort;
+    if (!stopped && emailScrapeStats.done >= emailScrapeStats.total) {
+      appendEmailScrapeLog(
+        `Finished — ${emailScrapeStats.found} email${emailScrapeStats.found !== 1 ? 's' : ''} found.`,
+        emailScrapeStats.found > 0 ? 'log-found' : 'log-miss',
+      );
+    }
+    updateEmailScrapeUI(null, stopped);
+    document.getElementById('stop-scrape-btn').disabled = true;
   }
 
   // --- Google Places API ---
@@ -394,19 +719,22 @@
       throw new Error('No results found. Try a different category or location.');
     }
 
-    const basicResults = places.map(p => ({
+    const basicResults = places.map(p => initResultFields({
       name: p.name,
       address: p.formatted_address || '',
       rating: p.rating ?? null,
       reviews: p.user_ratings_total ?? null,
       website: null,
       phone: null,
+      email: null,
+      emailSource: null,
       placeId: p.place_id,
     }));
 
     setProgress(`Found ${basicResults.length} places. Fetching details (0/${basicResults.length})...`);
     results = basicResults;
     results.forEach(r => { const s = computeLeadScore(r); r.scoreLabel = s.label; r.scoreRank = s.rank; });
+    showResultsArea();
     renderResults();
 
     for (let i = 0; i < basicResults.length; i++) {
@@ -427,6 +755,10 @@
       }
       results = basicResults;
       renderResults();
+    }
+
+    if (shouldScrapeEmails()) {
+      await enrichEmails(basicResults, 'google_website');
     }
 
     setProgress('');
@@ -466,19 +798,53 @@
     }
 
     const mapped = businesses.map(b => {
-      const biz = {
+      const biz = initResultFields({
         name: b.name,
         address: (b.location?.display_address || []).join(', '),
         rating: b.rating ?? null,
         reviews: b.review_count ?? null,
-        website: b.url || null,
+        website: isYelpUrl(b.url) ? null : (b.url || null),
         phone: b.display_phone || null,
-      };
+        yelpId: b.id,
+        email: null,
+        emailSource: null,
+      });
       const s = computeLeadScore(biz);
       biz.scoreLabel = s.label;
       biz.scoreRank = s.rank;
       return biz;
     });
+
+    results = mapped;
+    showResultsArea();
+    renderResults();
+
+    setProgress(`Found ${mapped.length} businesses. Fetching details (0/${mapped.length})...`);
+
+    for (let i = 0; i < mapped.length; i++) {
+      setProgress(`Fetching details (${i + 1}/${mapped.length})...`);
+      try {
+        const detailUrl = `${PROXY}/yelp/business?id=${encodeURIComponent(mapped[i].yelpId)}&key=${encodeURIComponent(apiKey)}`;
+        const dRes = await fetch(detailUrl);
+        const dData = await dRes.json();
+        if (dData && !dData.error) {
+          mapped[i].phone = dData.display_phone || mapped[i].phone;
+          const site = pickWebsite(dData.url);
+          if (site) mapped[i].website = site;
+          const s = computeLeadScore(mapped[i]);
+          mapped[i].scoreLabel = s.label;
+          mapped[i].scoreRank = s.rank;
+        }
+      } catch (_) {
+        // keep search-level data
+      }
+      results = mapped;
+      renderResults();
+    }
+
+    if (shouldScrapeEmails()) {
+      await enrichEmails(mapped, 'yelp_website');
+    }
 
     setProgress('');
     return mapped;
@@ -492,6 +858,8 @@
     btn.disabled = true;
     btnText.innerHTML = '<span class="spinner"></span> Searching';
     hideError();
+    resetEmailScrapeState();
+    showEmailScrapePanel(false);
 
     try {
       let data;
@@ -505,15 +873,16 @@
         sortField = 'score';
         sortAsc = false;
         applySort();
-        document.getElementById('results-area').style.display = '';
-        document.getElementById('empty-state').style.display = 'none';
+        showResultsArea();
       }
     } catch (e) {
       showError(e.message);
     } finally {
       btn.disabled = false;
       btnText.textContent = 'Search';
-      setProgress('');
+      if (!document.getElementById('email-scrape-panel').classList.contains('active')) {
+        setProgress('');
+      }
     }
   }
 
@@ -526,6 +895,7 @@
     reviews: r => r.reviews ?? -1,
     website: r => r.website ? 0 : 1,
     phone:   r => r.phone ? 0 : 1,
+    email:   r => r.email ? 0 : 1,
     score:   r => r.scoreRank,
   };
 
@@ -586,6 +956,7 @@
         <td>${r.reviews != null ? r.reviews.toLocaleString() : '<span style="color:var(--text-muted)">N/A</span>'}</td>
         <td>${r.website ? `<a href="${esc(r.website)}" target="_blank" class="truncate" style="display:block;max-width:180px;">${esc(hostOf(r.website))}</a>` : '<span style="color:var(--text-muted)">None</span>'}</td>
         <td>${r.phone ? esc(r.phone) : '<span style="color:var(--text-muted)">—</span>'}</td>
+        <td>${r.email ? `<span class="truncate" title="${esc(r.email)}">${esc(r.email)}</span>` : '<span style="color:var(--text-muted)">—</span>'}</td>
         <td>${scoreBadge(r.scoreLabel)}</td>
       </tr>
     `).join('');
@@ -606,9 +977,10 @@
 
   function exportCSV() {
     if (!results.length) return;
-    const headers = ['Name', 'Address', 'Rating', 'Reviews', 'Website', 'Phone', 'Lead Score'];
+    const headers = ['Name', 'Address', 'Rating', 'Reviews', 'Website', 'Phone', 'Email', 'Email Source', 'Lead Score'];
     const rows = results.map(r => [
-      r.name, r.address, r.rating ?? '', r.reviews ?? '', r.website ?? '', r.phone ?? '', r.scoreLabel
+      r.name, r.address, r.rating ?? '', r.reviews ?? '', r.website ?? '', r.phone ?? '',
+      r.email ?? '', r.emailSource ?? '', r.scoreLabel
     ]);
     const csv = [headers, ...rows]
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
