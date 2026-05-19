@@ -1,26 +1,89 @@
-# Python bytecode
+# =============================================================================
+# Business-sensitive content (keep locally; exclude from public repo)
+# =============================================================================
+prospects/
+business_presentation/
+outreach/
+
+# Standalone copies of prospect tools (data-entry HTML at repo root)
+/prospect-analyzer.html
+
+# Local landing-page / document exports
+files/
+LBMLandingPage/
+
+# Business documents
+*.docx
+*.pptx
+*.xlsx
+business_plan.docx
+month1_onboarding.docx
+
+# =============================================================================
+# Secrets and local environment
+# =============================================================================
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Azure Functions local settings (use local.settings.json.example)
+local.settings.json
+**/local.settings.json
+!local.settings.json.example
+!**/local.settings.json.example
+
+# Azure CLI / deploy artifacts
+.azure/
+deploy.zip
+
+# =============================================================================
+# Python
+# =============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.pyc/
-# Virtual environments
 venv/
-.env
 .venv/
 env/
-
-# Distribution / packaging
 build/
 dist/
 *.egg-info/
 pip-wheel-metadata/
-
-# Caches and test output
 .pytest_cache/
 .mypy_cache/
+.python_packages/
 
-# IDE/editor
+# =============================================================================
+# Node / frontend build
+# =============================================================================
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+lb-marketing-ui/.vite/
 
+# =============================================================================
+# IDE / editor
+# =============================================================================
 .idea/
-
+.vscode/
 .claude/
+
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+Thumbs.db
+
+# =============================================================================
+# Logs
+# =============================================================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

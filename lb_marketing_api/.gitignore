@@ -31,6 +31,9 @@ env/
 .env.local
 .env.*.local
 
+# Azure Functions local settings (secrets belong in App Settings / Key Vault)
+local.settings.json
+
 # IDE
 .vscode/*
 .idea/
