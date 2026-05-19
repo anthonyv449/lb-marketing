@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LB Marketing — Local Growth, Delivered</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --black: #0a0a0a;
+      --ink: #1a1a1a;
+      --ink-2: #3a3a3a;
+      --ink-3: #6a6a6a;
+      --ink-4: #9a9a9a;
+      --line: #e5e5e5;
+      --paper: #fafafa;
+      --paper-2: #f0f0f0;
+      --white: #ffffff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--white);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; height: 68px;
+    }
+    .nav-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.4rem; color: var(--black);
+      text-decoration: none; letter-spacing: -0.02em;
+      font-weight: 500;
+    }
+    .nav-logo span { font-style: italic; font-weight: 400; }
+    .nav-links { display: flex; gap: 2.25rem; list-style: none; align-items: center; }
+    .nav-links a {
+      text-decoration: none; color: var(--ink-2);
+      font-size: 0.875rem; font-weight: 400;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--black); }
+    .nav-cta {
+      background: var(--black); color: var(--white) !important;
+      padding: 0.55rem 1.25rem; border-radius: 2px;
+      font-weight: 500 !important;
+    }
+    .nav-cta:hover { background: var(--ink-2); }
+
+    /* HERO */
+    .hero {
+      min-height: 88vh;
+      display: flex; align-items: center;
+      padding: 7rem 5% 4rem;
+      position: relative;
+      background: var(--white);
+      border-bottom: 1px solid var(--line);
+    }
+    .hero-grid {
+      display: grid; grid-template-columns: 1.2fr 1fr;
+      gap: 4rem; align-items: center;
+      width: 100%;
+    }
+    .hero-eyebrow {
+      font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-3); font-weight: 500;
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 0.65rem;
+    }
+    .hero-eyebrow::before {
+      content: ''; display: block;
+      width: 28px; height: 1px; background: var(--ink-3);
+    }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.8rem, 5.5vw, 4.5rem);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      color: var(--black); font-weight: 400;
+      margin-bottom: 1.75rem;
+    }
+    h1 em { font-style: italic; font-weight: 300; color: var(--ink-2); }
+    .hero-sub {
+      font-size: 1.075rem; color: var(--ink-2); font-weight: 300;
+      max-width: 480px; line-height: 1.7;
+      margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-block;
+      background: var(--black); color: var(--white);
+      padding: 0.9rem 1.85rem; border-radius: 2px;
+      text-decoration: none; font-weight: 500; font-size: 0.9rem;
+      letter-spacing: 0.01em;
+      transition: background 0.2s, transform 0.15s;
+      border: 1px solid var(--black);
+    }
+    .btn-primary:hover { background: var(--ink-2); transform: translateY(-1px); }
+    .btn-outline {
+      display: inline-block;
+      border: 1px solid var(--black); color: var(--black);
+      padding: 0.9rem 1.85rem; border-radius: 2px;
+      text-decoration: none; font-weight: 500; font-size: 0.9rem;
+      transition: all 0.2s; background: transparent;
+    }
+    .btn-outline:hover { background: var(--black); color: var(--white); }
+
+    .hero-side {
+      border-left: 1px solid var(--line);
+      padding-left: 3rem;
+    }
+    .hero-side-label {
+      font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--ink-3); margin-bottom: 1rem;
+    }
+    .hero-side-quote {
+      font-family: 'Fraunces', serif;
+      font-style: italic; font-size: 1.25rem;
+      color: var(--ink); line-height: 1.45;
+      font-weight: 300;
+      margin-bottom: 2rem;
+    }
+    .hero-stat-row {
+      display: flex; flex-direction: column; gap: 1.25rem;
+      padding-top: 1.5rem; border-top: 1px solid var(--line);
+    }
+    .hero-stat { display: flex; align-items: baseline; gap: 1rem; }
+    .hero-stat-num {
+      font-family: 'Fraunces', serif;
+      font-size: 1.8rem; color: var(--black); line-height: 1;
+      font-weight: 400; min-width: 60px;
+    }
+    .hero-stat-label {
+      font-size: 0.825rem; color: var(--ink-3);
+    }
+
+    /* SECTION SHELLS */
+    section { padding: 6rem 5%; }
+    .section-label {
+      font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-3); font-weight: 500;
+      margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.65rem;
+    }
+    .section-label::before {
+      content: ''; display: block; width: 22px; height: 1px; background: var(--ink-3);
+    }
+    h2 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 3.8vw, 3rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--black); font-weight: 400;
+    }
+    h2 em { font-style: italic; font-weight: 300; color: var(--ink-2); }
+    .section-intro { color: var(--ink-2); font-weight: 300; margin-top: 1rem; font-size: 1.05rem; max-width: 580px; line-height: 1.75; }
+
+    /* MONTH 1 SECTION — FEATURED AT TOP */
+    .month-one {
+      background: var(--black); color: var(--white);
+      padding: 6rem 5%;
+    }
+    .month-one .section-label { color: var(--ink-4); }
+    .month-one .section-label::before { background: var(--ink-4); }
+    .month-one h2 { color: var(--white); }
+    .month-one h2 em { color: var(--ink-4); }
+    .month-one .section-intro { color: rgba(255,255,255,0.65); }
+
+    .m1-header { max-width: 720px; margin-bottom: 3.5rem; }
+
+    .m1-disclaimer {
+      margin-top: 2rem;
+      padding: 1.25rem 1.5rem;
+      border-left: 2px solid var(--white);
+      background: rgba(255,255,255,0.04);
+    }
+    .m1-disclaimer-label {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--white); font-weight: 500; margin-bottom: 0.4rem;
+    }
+    .m1-disclaimer p {
+      font-size: 0.9rem; color: rgba(255,255,255,0.75);
+      font-weight: 300; line-height: 1.65;
+    }
+
+    .timeline {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 0; margin-top: 3rem;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+    .timeline-step {
+      padding: 2.25rem 1.75rem;
+      border-right: 1px solid rgba(255,255,255,0.15);
+    }
+    .timeline-step:last-child { border-right: none; }
+    .t-week {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--ink-4); margin-bottom: 0.85rem;
+    }
+    .t-title {
+      font-family: 'Fraunces', serif; font-size: 1.2rem;
+      margin-bottom: 0.75rem; color: var(--white);
+      font-weight: 400; line-height: 1.25;
+    }
+    .t-desc { font-size: 0.83rem; color: rgba(255,255,255,0.6); font-weight: 300; line-height: 1.7; }
+
+    /* SERVICES */
+    .services-section { background: var(--paper); }
+    .services-header { margin-bottom: 3.5rem; max-width: 680px; }
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .service-card {
+      background: var(--white);
+      padding: 2.5rem 2rem;
+      transition: background 0.25s;
+    }
+    .service-card:hover { background: var(--paper); }
+    .service-num {
+      font-family: 'Fraunces', serif;
+      font-size: 0.85rem; color: var(--ink-4);
+      letter-spacing: 0.04em; margin-bottom: 1.25rem;
+      font-style: italic;
+    }
+    .service-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.35rem; font-weight: 400;
+      margin-bottom: 0.85rem; color: var(--black);
+      letter-spacing: -0.01em;
+    }
+    .service-card p { font-size: 0.9rem; color: var(--ink-2); font-weight: 300; line-height: 1.7; }
+    .service-card ul { margin-top: 1.25rem; padding-left: 0; list-style: none; }
+    .service-card ul li {
+      font-size: 0.85rem; color: var(--ink-2); padding: 0.35rem 0;
+      display: flex; align-items: flex-start; gap: 0.65rem;
+      font-weight: 400;
+    }
+    .service-card ul li::before {
+      content: '—'; color: var(--ink-4); font-size: 0.8rem;
+      margin-top: 0.05rem; flex-shrink: 0;
+    }
+
+    /* PRICING TIERS */
+    .pricing-section { background: var(--white); }
+    .pricing-header { text-align: center; max-width: 680px; margin: 0 auto 4rem; }
+    .pricing-header .section-label { justify-content: center; }
+    .pricing-header .section-intro { margin: 1rem auto 0; }
+
+    .tier-grid-2x2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      max-width: 1100px; margin: 0 auto;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+    .tier-card {
+      padding: 2.5rem 2.25rem;
+      background: var(--white);
+      display: flex; flex-direction: column;
+      position: relative;
+    }
+    .tier-demo {
+      background: var(--paper);
+    }
+    .tier-card.featured {
+      background: var(--black); color: var(--white);
+    }
+    .tier-card.featured .tier-name,
+    .tier-card.featured .tier-price-num,
+    .tier-card.featured .tier-tagline,
+    .tier-card.featured .tier-features li { color: var(--white); }
+    .tier-card.featured .tier-features li::before { color: rgba(255,255,255,0.5); }
+    .tier-card.featured .tier-features { border-top-color: rgba(255,255,255,0.15); }
+    .tier-card.featured .tier-price-suffix,
+    .tier-card.featured .tier-price-note { color: rgba(255,255,255,0.45); }
+    .tier-card.featured .btn-tier { background: var(--white); color: var(--black); border-color: var(--white); }
+    .tier-card.featured .btn-tier:hover { background: transparent; color: var(--white); }
+
+    .tier-badge {
+      position: absolute; top: 1.5rem; right: 1.5rem;
+      font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--black); background: var(--white);
+      padding: 0.3rem 0.65rem; border-radius: 2px;
+      font-weight: 600;
+    }
+    .tier-badge-inline {
+      font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--white); background: var(--black);
+      padding: 0.3rem 0.65rem; border-radius: 2px;
+      font-weight: 600; white-space: nowrap;
+    }
+    .tier-step-label {
+      font-size: 0.72rem; color: var(--ink-4);
+      letter-spacing: 0.06em; font-weight: 400;
+      white-space: nowrap;
+    }
+    .tier-header-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 0.5rem; flex-wrap: wrap;
+    }
+    .tier-card-top { margin-bottom: 0; }
+    .tier-name {
+      font-family: 'Fraunces', serif;
+      font-size: 1.5rem; font-weight: 400;
+      letter-spacing: -0.01em;
+      color: var(--black);
+    }
+    .tier-tagline {
+      font-size: 0.875rem; color: var(--ink-3);
+      font-weight: 300; margin-bottom: 1.5rem;
+      line-height: 1.55;
+    }
+    .tier-price {
+      display: flex; align-items: baseline; gap: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .tier-price-num {
+      font-family: 'Fraunces', serif;
+      font-size: 2.75rem; color: var(--black);
+      font-weight: 400; line-height: 1; letter-spacing: -0.02em;
+    }
+    .tier-price-suffix {
+      font-size: 0.85rem; color: var(--ink-3);
+      font-weight: 400;
+    }
+    .tier-price-note {
+      font-size: 0.75rem; color: var(--ink-4);
+      font-weight: 300; margin-bottom: 0;
+      font-style: italic;
+    }
+
+    .tier-features {
+      list-style: none; padding: 1.5rem 0 0;
+      margin-top: 1.5rem;
+      border-top: 1px solid var(--line);
+      flex: 1;
+    }
+    .tier-features li {
+      font-size: 0.875rem; color: var(--ink-2);
+      padding: 0.45rem 0;
+      display: flex; align-items: flex-start; gap: 0.65rem;
+      font-weight: 400; line-height: 1.5;
+      border-bottom: 1px solid var(--paper);
+    }
+    .tier-features li:last-child { border-bottom: none; }
+    .tier-features li::before {
+      content: '+'; color: var(--ink-4);
+      font-size: 0.85rem; line-height: 1.5;
+      flex-shrink: 0; font-weight: 500;
+    }
+    .btn-tier {
+      display: block; text-align: center;
+      background: var(--black); color: var(--white);
+      padding: 0.85rem 1rem; border-radius: 2px;
+      text-decoration: none; font-weight: 500; font-size: 0.875rem;
+      margin-top: 1.75rem;
+      border: 1px solid var(--black);
+      transition: all 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .btn-tier:hover { background: transparent; color: var(--black); }
+
+    .tier-disclaimer {
+      max-width: 1100px; margin: 2rem auto 0;
+      font-size: 0.8rem; color: var(--ink-3);
+      font-weight: 300; text-align: center;
+      font-style: italic; line-height: 1.7;
+    }
+
+    /* CTA */
+    .cta-band {
+      background: var(--black);
+      padding: 5.5rem 5%;
+      text-align: center;
+      border-top: 1px solid var(--ink-2);
+    }
+    .cta-band h2 { color: var(--white); }
+    .cta-band h2 em { color: rgba(255,255,255,0.6); }
+    .cta-band p { color: rgba(255,255,255,0.65); max-width: 480px; margin: 1.25rem auto 2.5rem; font-weight: 300; }
+    .btn-white {
+      display: inline-block;
+      background: var(--white); color: var(--black);
+      padding: 0.9rem 2.5rem; border-radius: 2px;
+      text-decoration: none; font-weight: 500; font-size: 0.9rem;
+      border: 1px solid var(--white);
+      transition: all 0.2s;
+    }
+    .btn-white:hover { background: transparent; color: var(--white); }
+
+    /* FOOTER */
+    footer {
+      background: var(--black); color: rgba(255,255,255,0.5);
+      padding: 2.5rem 5%;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+      border-top: 1px solid var(--ink-2);
+    }
+    .footer-logo {
+      font-family: 'Fraunces', serif;
+      font-size: 1.1rem; color: var(--white); text-decoration: none;
+      font-weight: 500;
+    }
+    .footer-logo span { font-style: italic; font-weight: 400; }
+    footer nav {
+      position: static; display: flex; gap: 1.5rem;
+      background: none; border: none; padding: 0; height: auto;
+    }
+    footer nav a { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    footer nav a:hover { color: var(--white); }
+    footer p { font-size: 0.78rem; }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .hero-side { border-left: none; padding-left: 0; border-top: 1px solid var(--line); padding-top: 2.5rem; }
+      .tier-grid-2x2 { grid-template-columns: 1fr; }
+      .nav-links li:not(:last-child) { display: none; }
+    }
+    @media (max-width: 768px) {
+      .timeline { grid-template-columns: 1fr 1fr; }
+      .nav-links li:not(:last-child) { display: none; }
+    }
+    @media (max-width: 480px) {
+      .timeline { grid-template-columns: 1fr; }
+      .timeline-step { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.15); }
+      .timeline-step:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">LB <span>Marketing</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#month-one">Month 1</a></li>
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="index.html#pricing">Pricing</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="nav-cta">Get Started</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <p class="hero-eyebrow">Local SEO &middot; Reviews &middot; Reputation</p>
+        <h1>Local Growth,<br><em>delivered</em> in 30 days.</h1>
+        <p class="hero-sub">We help local businesses get found, earn reviews, and dominate the map pack — with measurable progress in your first month, and no lock-in contracts.</p>
+        <div class="hero-actions">
+          <a href="contact.html" class="btn-primary">Request Free Audit →</a>
+          <a href="index.html#services" class="btn-outline">See Services</a>
+        </div>
+      </div>
+      <div class="hero-side">
+        <p class="hero-side-label">Our Approach</p>
+        <p class="hero-side-quote">"Month one should prove itself. If we can't show measurable progress in 30 days, you shouldn't keep paying."</p>
+        <div class="hero-stat-row">
+          <div class="hero-stat">
+            <div class="hero-stat-num">30</div>
+            <div class="hero-stat-label">Day audit &amp; optimization sprint</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">0</div>
+            <div class="hero-stat-label">Long-term contracts, ever</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MONTH 1 — FEATURED AT TOP -->
+  <section class="month-one" id="month-one">
+    <div class="m1-header">
+      <p class="section-label">Month 1 Sprint</p>
+      <h2>The first month is about <em>reviews and visibility</em>.</h2>
+      <p class="section-intro">Our entire goal in Month 1 is to grow your Google review count and lay the foundation for sustained local search visibility. Real reviews from real customers is the single biggest local ranking signal — so that's where we focus first.</p>
+      <div class="m1-disclaimer">
+        <p class="m1-disclaimer-label">Important: Not a guarantee</p>
+        <p>Review growth depends on your customer volume, your customers' willingness to leave reviews, and Google's evolving guidelines. We can't promise a specific number — but we can promise to run a compliant, professional campaign and report exactly what it produced.</p>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-step">
+        <p class="t-week">Days 1–5</p>
+        <p class="t-title">Digital Presence Audit</p>
+        <p class="t-desc">Complete written audit of your Google Business Profile, website, existing reviews, competitor positioning, and where you currently rank for your top keywords.</p>
+      </div>
+      <div class="timeline-step">
+        <p class="t-week">Week 2</p>
+        <p class="t-title">GBP Optimization</p>
+        <p class="t-desc">Every field on your Google Business Profile gets completed and optimized — categories, services, photos, hours, descriptions. Existing reviews are responded to.</p>
+      </div>
+      <div class="timeline-step">
+        <p class="t-week">Week 3</p>
+        <p class="t-title">Review Campaign Launch</p>
+        <p class="t-desc">Personalized review requests sent to recent customers via email. The goal is meaningful review growth — though final volume depends on customer engagement.</p>
+      </div>
+      <div class="timeline-step">
+        <p class="t-week">Week 4</p>
+        <p class="t-title">Before/After Report</p>
+        <p class="t-desc">A written report showing review count change, rating movement, profile views, ranking shifts, and the priority plan for Month 2 onward.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="services-section" id="services">
+    <div class="services-header">
+      <p class="section-label">What We Offer</p>
+      <h2>Everything you need for local <em>visibility</em>.</h2>
+      <p class="section-intro">Done-for-you services focused on the activities that actually move the needle for local businesses — Google Business Profile, reviews, local SEO, and a clean web presence.</p>
+    </div>
+    <div class="services-grid">
+
+      <div class="service-card">
+        <p class="service-num">01 — Profile</p>
+        <h3>Google Business Profile Management</h3>
+        <p>Your GBP is the most important asset in local search. We build it out completely and keep it active.</p>
+        <ul>
+          <li>Full profile completion and category optimization</li>
+          <li>Service listings with keyword-rich descriptions</li>
+          <li>Photo strategy and ongoing weekly posts</li>
+          <li>Q&amp;A management</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <p class="service-num">02 — Reviews</p>
+        <h3>Review Generation &amp; Reply Management</h3>
+        <p>Reviews drive both rankings and conversions. We run compliant email-first campaigns and respond to every review.</p>
+        <ul>
+          <li>Email-first review request campaigns</li>
+          <li>Personalized outreach to recent customers</li>
+          <li>AI-assisted review reply management</li>
+          <li>Compliant with Google guidelines (no gating)</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <p class="service-num">03 — Rankings</p>
+        <h3>Local SEO &amp; Keyword Tracking</h3>
+        <p>We establish your baseline and execute the on-page and citation work that drives real map pack movement over time.</p>
+        <ul>
+          <li>Top keyword ranking baseline (week 1)</li>
+          <li>On-page SEO audit and quick fixes</li>
+          <li>NAP consistency across directories</li>
+          <li>Ongoing rank tracking and reporting</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <p class="service-num">04 — Audit</p>
+        <h3>Digital Presence Audit</h3>
+        <p>Every engagement starts with a complete written audit of your online footprint, with a ranked action list.</p>
+        <ul>
+          <li>GBP completeness and accuracy review</li>
+          <li>Competitor review and ranking gap analysis</li>
+          <li>Website SEO quick assessment</li>
+          <li>Delivered in writing, week one</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <p class="service-num">05 — Reporting</p>
+        <h3>Monthly Performance Reports</h3>
+        <p>You'll always know exactly what we did and what it produced. No fluff — just before-and-after numbers.</p>
+        <ul>
+          <li>Search ranking movement</li>
+          <li>Review count and rating delta</li>
+          <li>GBP views and customer actions</li>
+          <li>Next-month priority plan</li>
+        </ul>
+      </div>
+
+      <div class="service-card">
+        <p class="service-num">06 — Website</p>
+        <h3>Website Builds &amp; Maintenance</h3>
+        <p>Clean, conversion-focused local business websites built on Webflow — fast to launch, easy to maintain.</p>
+        <ul>
+          <li>Mobile-first local business design</li>
+          <li>On-page SEO baked in from day one</li>
+          <li>Ongoing edits and content updates</li>
+          <li>Client retains full ownership</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing-section" id="pricing">
+    <div class="pricing-header">
+      <p class="section-label">Pricing</p>
+      <h2>Four tiers. <em>Zero contracts.</em></h2>
+      <p class="section-intro">Every client starts with the Month 1 Demo — a one-time, no-commitment engagement to prove results before you pay a monthly retainer. From there, choose the tier that fits your goals.</p>
+    </div>
+
+    <div class="tier-grid-2x2">
+
+      <!-- MONTH 1 DEMO -->
+      <div class="tier-card tier-demo">
+        <div class="tier-card-top">
+          <div class="tier-header-row">
+            <p class="tier-name">Month 1 Demo</p>
+            <span class="tier-badge-inline">Start here</span>
+          </div>
+          <p class="tier-tagline">A one-time engagement to audit, optimise, and run your first review campaign — before any ongoing commitment.</p>
+          <div class="tier-price">
+            <span class="tier-price-num">$200</span>
+            <span class="tier-price-suffix">one-time</span>
+          </div>
+          <p class="tier-price-note">No contract &middot; Walk away after Week 4 if it's not working</p>
+        </div>
+        <ul class="tier-features">
+          <li>Full digital presence audit (delivered Week 1)</li>
+          <li>Google Business Profile fully optimised</li>
+          <li>All existing reviews responded to</li>
+          <li>First review generation campaign (SMS &amp; email)</li>
+          <li>Before/after report at end of Week 4</li>
+          <li>Local keyword ranking baseline established</li>
+          <li>Competitor benchmarking across top 4–5 rivals</li>
+        </ul>
+        <a href="contact.html" class="btn-tier">Start with Month 1 Demo</a>
+      </div>
+
+      <!-- STARTER -->
+      <div class="tier-card">
+        <div class="tier-card-top">
+          <div class="tier-header-row">
+            <p class="tier-name">Starter</p>
+            <span class="tier-step-label">Month 2+</span>
+          </div>
+          <p class="tier-tagline">Maintain momentum and keep growing with consistent GBP activity, reviews, and citations.</p>
+          <div class="tier-price">
+            <span class="tier-price-num">$750</span>
+            <span class="tier-price-suffix">/ month</span>
+          </div>
+          <p class="tier-price-note">No contract &middot; Cancel anytime</p>
+        </div>
+        <ul class="tier-features">
+          <li>4 GBP posts per month (keyword-informed copy + images)</li>
+          <li>Yelp profile management and NAP consistency</li>
+          <li>Monthly review request campaign (drip model)</li>
+          <li>All Google &amp; Yelp reviews responded to</li>
+          <li>Quarterly citation audit across 20–30 directories</li>
+          <li>Website content maintenance (where CMS access granted)</li>
+          <li>5 keywords tracked monthly</li>
+          <li>Monthly performance report + 30-min check-in call</li>
+          <li>Email support — 48hr response time</li>
+        </ul>
+        <a href="contact.html" class="btn-tier">Choose Starter</a>
+      </div>
+
+      <!-- GROWTH -->
+      <div class="tier-card featured">
+        <span class="tier-badge">Most Popular</span>
+        <div class="tier-card-top">
+          <div class="tier-header-row">
+            <p class="tier-name">Growth</p>
+            <span class="tier-step-label" style="color:rgba(255,255,255,0.45)">Month 2–3+</span>
+          </div>
+          <p class="tier-tagline">Everything in Starter, plus content, social media, expanded SEO, and a structured referral strategy.</p>
+          <div class="tier-price">
+            <span class="tier-price-num">$1,500</span>
+            <span class="tier-price-suffix">/ month</span>
+          </div>
+          <p class="tier-price-note">No contract &middot; Cancel anytime</p>
+        </div>
+        <ul class="tier-features">
+          <li>Everything in Starter</li>
+          <li>2 blog posts per month (500–800 words, SEO-targeted)</li>
+          <li>8 social media posts per month (platform matched to vertical)</li>
+          <li>10–15 keywords tracked monthly</li>
+          <li>On-page SEO recommendations + implementation</li>
+          <li>Monthly referral strategy: 3–5 targets + outreach scripts</li>
+          <li>Social engagement metrics in monthly report</li>
+          <li>30-min monthly strategy call with next-month preview</li>
+          <li>Reporting dashboard access (launching Q4 2026)</li>
+        </ul>
+        <a href="contact.html" class="btn-tier">Choose Growth</a>
+      </div>
+
+      <!-- PREMIUM -->
+      <div class="tier-card">
+        <div class="tier-card-top">
+          <div class="tier-header-row">
+            <p class="tier-name">Premium</p>
+            <span class="tier-step-label">Month 4+</span>
+          </div>
+          <p class="tier-tagline">Full-funnel, maximum-presence. Paid ads, CRO landing pages, link building, and competitor monitoring.</p>
+          <div class="tier-price">
+            <span class="tier-price-num">$2,500</span>
+            <span class="tier-price-suffix">/ month</span>
+          </div>
+          <p class="tier-price-note">+ ad spend (billed directly to client by Google/Meta) &middot; No contract</p>
+        </div>
+        <ul class="tier-features">
+          <li>Everything in Growth</li>
+          <li>Google Ads and/or Meta Ads management</li>
+          <li>Dedicated CRO landing pages per campaign</li>
+          <li>Link building — up to 5 placements/month</li>
+          <li>AI search optimisation / AEO (experimental)</li>
+          <li>Monthly competitor monitoring snapshot</li>
+          <li>Quarterly written strategy document</li>
+          <li>Priority email support — 24hr response time</li>
+          <li>Ad performance metrics in monthly report</li>
+        </ul>
+        <a href="contact.html" class="btn-tier">Choose Premium</a>
+      </div>
+
+    </div>
+
+    <p class="tier-disclaimer">All tiers are month-to-month with no setup fees and no cancellation penalties. Ad spend at the Premium tier is billed separately — paid directly by you to Google and/or Meta. Website maintenance is included at Starter and above where CMS access is granted (content updates only — not redesigns or new builds).</p>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-band">
+    <h2>Ready to see where you <em>stand</em>?</h2>
+    <p>Start with a free digital presence audit. We'll show you exactly what's holding you back — and what we'd do about it.</p>
+    <a href="contact.html" class="btn-white">Request Your Free Audit →</a>
+  </div>
+
+  <footer>
+    <a href="index.html" class="footer-logo">LB <span>Marketing</span></a>
+    <nav>
+      <a href="index.html#services">Services</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <p>© 2025 LB Marketing</p>
+  </footer>
+
+</body>
+</html>

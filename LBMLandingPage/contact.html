@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — LB Marketing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0a0a0a;
+      --ink: #1a1a1a;
+      --ink-2: #3a3a3a;
+      --ink-3: #6a6a6a;
+      --ink-4: #9a9a9a;
+      --line: #e5e5e5;
+      --paper: #fafafa;
+      --paper-2: #f0f0f0;
+      --white: #ffffff;
+      --error: #1a1a1a;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--white); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; height: 68px;
+    }
+    .nav-logo { font-family: 'Fraunces', serif; font-size: 1.4rem; color: var(--black); text-decoration: none; letter-spacing: -0.02em; font-weight: 500; }
+    .nav-logo span { font-style: italic; font-weight: 400; }
+    .nav-links { display: flex; gap: 2.25rem; list-style: none; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--ink-2); font-size: 0.875rem; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--black); }
+    .nav-links a.active { color: var(--black); }
+    .nav-cta { background: var(--black); color: var(--white) !important; padding: 0.55rem 1.25rem; border-radius: 2px; font-weight: 500 !important; }
+
+    /* LAYOUT */
+    .contact-wrapper {
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      padding-top: 68px;
+    }
+
+    /* LEFT PANEL */
+    .contact-left {
+      background: var(--black); color: var(--white);
+      padding: 5rem;
+      display: flex; flex-direction: column; justify-content: center;
+      position: sticky; top: 68px; height: calc(100vh - 68px);
+    }
+    .section-label {
+      font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--ink-4); font-weight: 500; margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.65rem;
+    }
+    .section-label::before { content: ''; display: block; width: 22px; height: 1px; background: var(--ink-4); }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 3.2vw, 3rem);
+      letter-spacing: -0.03em; line-height: 1.1;
+      margin-bottom: 1.5rem; font-weight: 400;
+    }
+    h1 em { font-style: italic; font-weight: 300; color: rgba(255,255,255,0.6); }
+    .left-sub { font-size: 1rem; color: rgba(255,255,255,0.65); font-weight: 300; line-height: 1.75; max-width: 400px; margin-bottom: 3rem; }
+
+    .contact-info { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2.5rem; }
+    .info-row { display: flex; align-items: center; gap: 1rem; }
+    .info-icon {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .info-icon svg { width: 16px; height: 16px; stroke: var(--white); fill: none; stroke-width: 1.6; }
+    .info-text { font-size: 0.95rem; color: rgba(255,255,255,0.85); }
+    .info-text strong { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.4); font-weight: 500; margin-bottom: 0.2rem; }
+
+    .left-promise {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 1.25rem 1.5rem;
+    }
+    .left-promise p { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 300; line-height: 1.7; }
+    .left-promise strong { color: rgba(255,255,255,0.9); font-weight: 500; }
+
+    /* RIGHT PANEL — FORM */
+    .contact-right {
+      background: var(--white);
+      padding: 5rem 4rem;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .form-header { margin-bottom: 2.5rem; }
+    .form-header h2 { font-family: 'Fraunces', serif; font-size: 1.85rem; letter-spacing: -0.025em; font-weight: 400; color: var(--black); }
+    .form-header h2 em { font-style: italic; font-weight: 300; color: var(--ink-2); }
+    .form-header p { font-size: 0.9rem; color: var(--ink-3); margin-top: 0.4rem; font-weight: 300; }
+
+    .form { display: flex; flex-direction: column; gap: 1.25rem; max-width: 480px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .field { display: flex; flex-direction: column; gap: 0.4rem; }
+    .field label {
+      font-size: 0.72rem; font-weight: 500; color: var(--ink-2);
+      letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .field label .optional { font-weight: 300; text-transform: none; letter-spacing: 0; color: var(--ink-4); }
+
+    .field input, .field select, .field textarea {
+      background: var(--white); border: 1px solid var(--line);
+      border-radius: 2px; padding: 0.8rem 0.9rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.925rem; color: var(--black);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none; -webkit-appearance: none;
+      outline: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--black);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    }
+    .field input::placeholder, .field textarea::placeholder { color: var(--ink-4); }
+    .field textarea { resize: vertical; min-height: 110px; font-family: 'Inter', sans-serif; }
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%236a6a6a' stroke-width='1.5' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 0.875rem center;
+      padding-right: 2.5rem; cursor: pointer;
+    }
+
+    /* CHECKBOXES */
+    .checkbox-group { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.2rem; }
+    .checkbox-item { display: flex; align-items: center; gap: 0.7rem; cursor: pointer; }
+    .checkbox-item input[type="checkbox"] {
+      width: 16px; height: 16px; border: 1.5px solid var(--line);
+      border-radius: 2px; appearance: none; -webkit-appearance: none;
+      background: var(--white); cursor: pointer; transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .checkbox-item input[type="checkbox"]:checked {
+      background: var(--black); border-color: var(--black);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath fill='none' stroke='white' stroke-width='1.8' d='M1 4l3 3 5-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: center;
+    }
+    .checkbox-item span { font-size: 0.9rem; color: var(--ink-2); }
+
+    .submit-row { margin-top: 0.75rem; display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+    .btn-submit {
+      background: var(--black); color: var(--white);
+      border: 1px solid var(--black); border-radius: 2px;
+      padding: 0.9rem 2.25rem;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.01em;
+    }
+    .btn-submit:hover:not(:disabled) { background: transparent; color: var(--black); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-note { font-size: 0.78rem; color: var(--ink-4); font-weight: 300; }
+
+    /* SUCCESS STATE */
+    .success-state {
+      display: none;
+      background: var(--paper);
+      border: 1px solid var(--black);
+      padding: 2.5rem;
+      text-align: center;
+    }
+    .success-state.visible { display: block; }
+    .success-icon {
+      width: 48px; height: 48px;
+      border: 1.5px solid var(--black);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.2rem; color: var(--black);
+    }
+    .success-state h3 { font-family: 'Fraunces', serif; font-size: 1.5rem; color: var(--black); margin-bottom: 0.5rem; font-weight: 400; letter-spacing: -0.02em; }
+    .success-state p { font-size: 0.95rem; color: var(--ink-3); font-weight: 300; line-height: 1.7; }
+
+    footer {
+      background: var(--black); color: rgba(255,255,255,0.5);
+      padding: 2.5rem 5%;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem;
+      grid-column: 1 / -1;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .footer-logo { font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--white); text-decoration: none; font-weight: 500; }
+    .footer-logo span { font-style: italic; font-weight: 400; }
+    footer nav { position: static; display: flex; gap: 1.5rem; background: none; border: none; padding: 0; height: auto; }
+    footer nav a { font-size: 0.8rem; color: rgba(255,255,255,0.5); text-decoration: none; transition: color 0.2s; }
+    footer nav a:hover { color: var(--white); }
+    footer p { font-size: 0.78rem; }
+
+    @media (max-width: 900px) {
+      .contact-wrapper { grid-template-columns: 1fr; }
+      .contact-left { position: static; height: auto; padding: 4rem 5% 3rem; }
+      .contact-right { padding: 3rem 5%; }
+      .nav-links li:not(:last-child) { display: none; }
+    }
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">LB <span>Marketing</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#month-one">Month 1</a></li>
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="index.html#pricing">Pricing</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="active nav-cta">Get Started</a></li>
+    </ul>
+  </nav>
+
+  <div class="contact-wrapper">
+    <!-- LEFT -->
+    <div class="contact-left">
+      <p class="section-label">Get in touch</p>
+      <h1>Let's look at <em>your numbers</em>.</h1>
+      <p class="left-sub">Request a free digital presence audit and I'll show you exactly where you stand, what competitors are doing better, and what I'd prioritize in Month 1.</p>
+
+      <div class="contact-info">
+        <div class="info-row">
+          <div class="info-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <div class="info-text">
+            <strong>Email</strong>
+            anthonyval@marketboostapp.com
+          </div>
+        </div>
+      </div>
+
+      <div class="left-promise">
+        <p><strong>No pitch, no pressure.</strong></p>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="contact-right">
+      <div class="form-header">
+        <h2>Request your <em>first audit</em></h2>
+        <p>Takes 2 minutes. I'll do the rest.</p>
+      </div>
+
+      <div id="success" class="success-state">
+        <div class="success-icon">✓</div>
+        <h3>Audit Request Received</h3>
+        <p>I'll review your business and send over your digital presence audit between 1-3 business days.</p>
+      </div>
+
+      <form class="form" id="contactForm" novalidate>
+        <div class="field-row">
+          <div class="field">
+            <label for="fname">First Name</label>
+            <input type="text" id="fname" name="fname" placeholder="Jane" required />
+          </div>
+          <div class="field">
+            <label for="lname">Last Name</label>
+            <input type="text" id="lname" name="lname" placeholder="Smith" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" placeholder="jane@yourbusiness.com" required />
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone Number <span class="optional">(optional)</span></label>
+          <input type="tel" id="phone" name="phone" placeholder="(555) 555-0100" />
+        </div>
+
+        <div class="field">
+          <label for="business">Business Name</label>
+          <input type="text" id="business" name="business" placeholder="Your Business Name" required />
+        </div>
+
+        <div class="field">
+          <label for="website">Business Website <span class="optional">(if you have one)</span></label>
+          <input type="url" id="website" name="website" placeholder="https://yourbusiness.com" />
+        </div>
+
+        <div class="field">
+          <label for="vertical">Industry</label>
+          <select id="vertical" name="vertical" required>
+            <option value="" disabled selected>Select your industry</option>
+            <option value="salon_spa">Salon / Spa / Beauty</option>
+            <option value="legal">Legal / Attorney / Law Firm</option>
+            <option value="professional">Professional Services (Accounting, Consulting, etc.)</option>
+            <option value="home_services">Home Services (Electrician, Plumber, Landscaper)</option>
+            <option value="restaurant">Restaurant / Food Service</option>
+            <option value="retail">Retail / Storefront</option>
+            <option value="health">Health / Wellness / Fitness</option>
+            <option value="auto">Auto Services</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="tier">Tier you're interested in <span class="optional">(optional)</span></label>
+          <select id="tier" name="tier">
+            <option value="" selected>Not sure yet — show me the options</option>
+            <option value="demo">Month 1 Demo — $200 one-time</option>
+            <option value="starter">Starter — $750/month</option>
+            <option value="growth">Growth — $1,500/month</option>
+            <option value="premium">Premium — $2,500/month + ad spend</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Biggest challenges <span class="optional">(select all that apply)</span></label>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" name="challenge" value="not_found" />
+              <span>Hard to find on Google / not in the map pack</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="challenge" value="reviews" />
+              <span>Need more reviews or a better rating</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="challenge" value="website" />
+              <span>Website is outdated or not converting</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="challenge" value="competitors" />
+              <span>Competitors are outranking me</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" name="challenge" value="not_sure" />
+              <span>Not sure — I want to see the audit first</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="message">Anything else? <span class="optional">(optional)</span></label>
+          <textarea id="message" name="message" placeholder="Tell me about your business, goals, or anything that would help me prepare a useful audit…"></textarea>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="btn-submit">Send Audit Request →</button>
+          <span class="submit-note">No spam. No lock-in.</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <a href="index.html" class="footer-logo">LB <span>Marketing</span></a>
+    <nav>
+      <a href="index.html#services">Services</a>
+      <a href="index.html#pricing">Pricing</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <p>© 2025 LB Marketing</p>
+  </footer>
+
+  <script>
+    // Paste your Google Apps Script Web App URL here after deploying Code.gs
+    const SCRIPT_URL = 'https://script.google.com/a/macros/marketboostapp.com/s/AKfycbwEK3yNipw4THqMcntYJhIGhTEXPWpanbzyn5I6R5qMHg50CmoA4DdpyCf6mFOZdV40_w/exec';
+
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const fname    = document.getElementById('fname').value.trim();
+      const email    = document.getElementById('email').value.trim();
+      const business = document.getElementById('business').value.trim();
+      const vertical = document.getElementById('vertical').value;
+
+      if (!fname || !email || !business || !vertical) {
+        const empties = [];
+        if (!fname)    empties.push('First Name');
+        if (!email)    empties.push('Email');
+        if (!business) empties.push('Business Name');
+        if (!vertical) empties.push('Industry');
+        alert('Please fill in: ' + empties.join(', '));
+        return;
+      }
+
+      const btn = this.querySelector('.btn-submit');
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      const challenges = Array.from(
+        this.querySelectorAll('input[name="challenge"]:checked')
+      ).map(cb => cb.value).join(',');
+
+      const payload = new URLSearchParams({
+        fname:    fname,
+        lname:    document.getElementById('lname').value.trim(),
+        email:    email,
+        phone:    document.getElementById('phone').value.trim(),
+        business: business,
+        website:  document.getElementById('website').value.trim(),
+        vertical: vertical,
+        tier:     document.getElementById('tier').value,
+        challenges: challenges,
+        message:  document.getElementById('message').value.trim()
+      });
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: payload.toString()
+        });
+
+        this.style.display = 'none';
+        document.getElementById('success').classList.add('visible');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      } catch (err) {
+        btn.textContent = 'Send Audit Request →';
+        btn.disabled = false;
+        alert('Something went wrong. Please try again or email me directly at anthonyval@marketboostapp.com');
+        console.error('Form submission error:', err);
+      }
+    });
+  </script>
+
+</body>
+</html>
