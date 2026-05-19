@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="480" viewBox="0 0 400 480">
+  <title>LBM — LB Marketing Logo</title>
+  <desc>Circle badge logo for LB Marketing. Dark navy background with gold ring accent and white LBM monogram.</desc>
+
+  <!-- Badge circle -->
+  <circle cx="200" cy="200" r="180" fill="#0F172A"/>
+
+  <!-- Outer gold ring -->
+  <circle cx="200" cy="200" r="180" fill="none" stroke="#D97706" stroke-width="8"/>
+
+  <!-- Inner subtle gold ring -->
+  <circle cx="200" cy="200" r="160" fill="none" stroke="#D97706" stroke-width="2" opacity="0.3"/>
+
+  <!-- LBM monogram -->
+  <text
+    x="200"
+    y="230"
+    text-anchor="middle"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-weight="700"
+    font-size="116"
+    fill="#ffffff"
+    letter-spacing="6"
+  >LBM</text>
+
+  <!-- LB Marketing wordmark below badge -->
+  <text
+    x="200"
+    y="430"
+    text-anchor="middle"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-weight="500"
+    font-size="28"
+    fill="#D97706"
+    letter-spacing="8"
+  >LB MARKETING</text>
+
+</svg>

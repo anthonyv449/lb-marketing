@@ -66,18 +66,20 @@ header .badge{background:rgba(255,255,255,.12);font-size:.75rem;padding:.2rem .6
 .table-header{padding:.75rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.5rem}
 .table-header .count{font-size:.85rem;color:var(--text2)}
 .table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:.8rem}
-thead{background:#f9fafb;position:sticky;top:0}
-th{padding:.6rem .75rem;text-align:left;font-weight:700;color:var(--text2);text-transform:uppercase;font-size:.7rem;letter-spacing:.04em;cursor:pointer;white-space:nowrap;user-select:none;border-bottom:2px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.8rem;table-layout:fixed}
+thead{background:#f9fafb;position:sticky;top:0;z-index:1}
+th{padding:.6rem .75rem;text-align:left;font-weight:700;color:var(--text2);text-transform:uppercase;font-size:.7rem;letter-spacing:.04em;cursor:pointer;white-space:nowrap;user-select:none;border-bottom:2px solid var(--border);overflow:hidden;text-overflow:ellipsis}
 th:hover{color:var(--text)}
 th .sort-icon{margin-left:.3rem;opacity:.4}
 th.sorted .sort-icon{opacity:1;color:var(--accent)}
-td{padding:.55rem .75rem;border-bottom:1px solid var(--border);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td{padding:.55rem .75rem;border-bottom:1px solid var(--border);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
 tr:hover td{background:#f9fafb}
 .lead-badge{display:inline-block;padding:.1rem .5rem;border-radius:99px;font-size:.7rem;font-weight:700;text-transform:uppercase}
 .lead-high{background:#d1fae5;color:#065f46}
 .lead-medium{background:#fef3c7;color:#92400e}
 .lead-low{background:#f1f5f9;color:#475569}
+.lead-unknown{background:#e5e7eb;color:#4b5563}
+.email-source{font-size:.7rem;color:var(--text2);text-transform:lowercase}
 a.website-link{color:var(--accent);text-decoration:none;font-weight:500}
 a.website-link:hover{text-decoration:underline}
 
@@ -126,6 +128,7 @@ a.website-link:hover{text-decoration:underline}
     <div class="stat-card"><div class="label">Avg Rating</div><div class="value" id="stat-rating">—</div><div class="sub" id="stat-rated">0 rated</div></div>
     <div class="stat-card"><div class="label">High Leads</div><div class="value" id="stat-high" style="color:var(--high)">0</div><div class="sub" id="stat-high-pct">0%</div></div>
     <div class="stat-card"><div class="label">No Website</div><div class="value" id="stat-noweb" style="color:var(--red)">0</div><div class="sub" id="stat-noweb-pct">0%</div></div>
+    <div class="stat-card"><div class="label">With Email</div><div class="value" id="stat-email" style="color:var(--accent)">0</div><div class="sub" id="stat-email-pct">0%</div></div>
     <div class="stat-card"><div class="label">Unique Cities</div><div class="value" id="stat-cities">0</div><div class="sub" id="stat-categories">0 categories</div></div>
   </div>
 
@@ -168,6 +171,10 @@ a.website-link:hover{text-decoration:underline}
       <select id="f-website"><option value="">Any</option><option value="yes">Yes</option><option value="no">No</option></select>
     </div>
     <div class="filter-group">
+      <label>Has Email</label>
+      <select id="f-email"><option value="">Any</option><option value="yes">Yes</option><option value="no">No</option></select>
+    </div>
+    <div class="filter-group">
       <label>Source File</label>
       <select id="f-source"><option value="">All</option></select>
     </div>
@@ -188,7 +195,8 @@ a.website-link:hover{text-decoration:underline}
         </div>
       </div>
       <div class="table-scroll">
-        <table>
+        <table id="data-table">
+          <colgroup id="table-cols"></colgroup>
           <thead>
             <tr id="table-head"></tr>
           </thead>
@@ -209,16 +217,25 @@ a.website-link:hover{text-decoration:underline}
 </div>
 
 <script>
+/** Column defs — single source for header, body, colgroup (matches prospector export + analyzer fields). */
 const COLUMNS = [
-  {key:'name',label:'Business Name',width:'20%'},
-  {key:'category',label:'Category'},
-  {key:'city',label:'City'},
-  {key:'rating',label:'Rating'},
-  {key:'reviews',label:'Reviews'},
-  {key:'website',label:'Website'},
-  {key:'phone',label:'Phone'},
-  {key:'leadScore',label:'Lead Score'},
-  {key:'source',label:'Source File'}
+  { key: 'name', label: 'Name', width: '14%' },
+  { key: 'address', label: 'Address', width: '14%' },
+  { key: 'category', label: 'Category', width: '8%' },
+  { key: 'city', label: 'City', width: '8%' },
+  { key: 'rating', label: 'Rating', width: '5%' },
+  { key: 'reviews', label: 'Reviews', width: '6%' },
+  { key: 'website', label: 'Website', width: '8%' },
+  { key: 'phone', label: 'Phone', width: '9%' },
+  { key: 'email', label: 'Email', width: '11%' },
+  { key: 'emailSource', label: 'Email Source', width: '8%' },
+  { key: 'leadScore', label: 'Lead Score', width: '7%' },
+  { key: 'source', label: 'Source File', width: '10%' },
+];
+
+/** Prospector CSV export column order (round-trip). */
+const PROSPECTOR_CSV_HEADERS = [
+  'Name', 'Address', 'Rating', 'Reviews', 'Website', 'Phone', 'Email', 'Email Source', 'Lead Score',
 ];
 
 const PAGE_SIZE = 50;
@@ -295,12 +312,8 @@ function parseCSVText(text, filename) {
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (ch === '"') {
-      if (inQuotes && i + 1 < text.length && text[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
+      inQuotes = !inQuotes;
+      current += ch;
     } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
       if (current.length > 0 || lines.length > 0) {
         lines.push(current);
@@ -371,8 +384,14 @@ function normalizeRow(raw, filename) {
   const reviews = parseInt(get('reviews', 'reviewcount', 'numreviews'), 10) || 0;
   const website = get('website', 'url', 'site');
   const phone = get('phone', 'phonenumber', 'telephone');
-  const leadScore = normalizeLeadScore(get('leadscore', 'lead', 'score'));
+  const email = get('email', 'emailaddress', 'contactemail');
+  const emailSource = get('emailsource', 'emailsrc', 'email_source');
+  let leadScore = normalizeLeadScore(get('leadscore', 'lead', 'score'));
   const status = get('status', 'contacted');
+
+  if (!get('leadscore', 'lead', 'score') && name) {
+    leadScore = computeLeadScoreFromSignals({ rating, reviews, website });
+  }
 
   return {
     name,
@@ -382,12 +401,36 @@ function normalizeRow(raw, filename) {
     reviews,
     website,
     phone,
+    email,
+    emailSource,
     leadScore,
     status,
     category: extractCategory(filename),
     source: filename,
-    _dedupeKey: (name + '|' + address).toLowerCase().replace(/\s+/g, ' ')
+    _dedupeKey: (name + '|' + address).toLowerCase().replace(/\s+/g, ' '),
   };
+}
+
+/** Same weak-signal logic as prospector.html computeLeadScore */
+function computeLeadScoreFromSignals(biz) {
+  let weakSignals = 0;
+  if (biz.rating != null && biz.rating < 4.2) weakSignals++;
+  if (biz.rating == null) weakSignals++;
+  if (biz.reviews != null && biz.reviews < 50) weakSignals++;
+  if (biz.reviews == null) weakSignals++;
+  if (!biz.website) weakSignals++;
+  if (weakSignals >= 3) return 'High';
+  if (weakSignals === 2) return 'Medium';
+  return 'Low';
+}
+
+function isYelpUrl(url) {
+  if (!url) return false;
+  try { return new URL(url).hostname.toLowerCase().includes('yelp.com'); } catch { return String(url).includes('yelp.com'); }
+}
+
+function websiteHost(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
 }
 
 function normalizeLeadScore(val) {
@@ -417,19 +460,32 @@ function extractCategory(filename) {
   return filename.replace(/\.[^.]+$/, '');
 }
 
+function rowCompleteness(row) {
+  let score = 0;
+  if (row.email) score += 100;
+  if (row.website) score += 10;
+  if (row.phone) score += 5;
+  if (row.reviews) score += 2;
+  return score;
+}
+
 function mergeRecords(rows, filename) {
-  const existingKeys = new Set(allRecords.map(r => r._dedupeKey));
+  const byKey = new Map(allRecords.map(r => [r._dedupeKey, r]));
   let added = 0, skipped = 0;
   for (const row of rows) {
     if (!row.name) { skipped++; continue; }
-    if (existingKeys.has(row._dedupeKey)) {
+    const existing = byKey.get(row._dedupeKey);
+    if (existing) {
+      if (rowCompleteness(row) > rowCompleteness(existing)) {
+        Object.assign(existing, row);
+      }
       skipped++;
     } else {
-      existingKeys.add(row._dedupeKey);
-      allRecords.push(row);
+      byKey.set(row._dedupeKey, row);
       added++;
     }
   }
+  allRecords = [...byKey.values()];
   return { added, skipped };
 }
 
@@ -484,10 +540,14 @@ function applyFilters() {
   const rMax = parseFloat(document.getElementById('f-rating-max').value) || 5;
   const revMin = parseInt(document.getElementById('f-reviews-min').value, 10) || 0;
   const web = document.getElementById('f-website').value;
+  const hasEmail = document.getElementById('f-email').value;
   const src = document.getElementById('f-source').value;
 
   filteredRecords = allRecords.filter(r => {
-    if (search && !r.name.toLowerCase().includes(search) && !r.city.toLowerCase().includes(search)) return false;
+    if (search) {
+      const hay = `${r.name} ${r.city} ${r.address} ${r.email}`.toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
     if (lead && r.leadScore !== lead) return false;
     if (cat && r.category !== cat) return false;
     if (r.rating !== null && (r.rating < rMin || r.rating > rMax)) return false;
@@ -495,6 +555,8 @@ function applyFilters() {
     if (r.reviews < revMin) return false;
     if (web === 'yes' && !r.website) return false;
     if (web === 'no' && r.website) return false;
+    if (hasEmail === 'yes' && !r.email) return false;
+    if (hasEmail === 'no' && r.email) return false;
     if (src && r.source !== src) return false;
     return true;
   });
@@ -505,7 +567,7 @@ function applyFilters() {
   renderTable();
 }
 
-['f-search','f-lead','f-category','f-rating-min','f-rating-max','f-reviews-min','f-website','f-source'].forEach(id => {
+['f-search','f-lead','f-category','f-rating-min','f-rating-max','f-reviews-min','f-website','f-email','f-source'].forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', debounce(applyFilters, 200));
 });
@@ -518,6 +580,7 @@ function resetFilters() {
   document.getElementById('f-rating-max').value = '';
   document.getElementById('f-reviews-min').value = '';
   document.getElementById('f-website').value = '';
+  document.getElementById('f-email').value = '';
   document.getElementById('f-source').value = '';
   applyFilters();
 }
@@ -530,6 +593,7 @@ function updateStats() {
   const avgRating = rated.length ? (rated.reduce((s, r) => s + r.rating, 0) / rated.length).toFixed(1) : '—';
   const high = data.filter(r => r.leadScore === 'High').length;
   const noWeb = data.filter(r => !r.website).length;
+  const withEmail = data.filter(r => r.email).length;
   const cities = new Set(data.map(r => r.city));
   const categories = new Set(data.map(r => r.category));
 
@@ -541,6 +605,10 @@ function updateStats() {
   document.getElementById('stat-high-pct').textContent = total ? Math.round(high / total * 100) + '%' : '0%';
   document.getElementById('stat-noweb').textContent = noWeb;
   document.getElementById('stat-noweb-pct').textContent = total ? Math.round(noWeb / total * 100) + '%' : '0%';
+  const statEmail = document.getElementById('stat-email');
+  const statEmailPct = document.getElementById('stat-email-pct');
+  if (statEmail) statEmail.textContent = withEmail;
+  if (statEmailPct) statEmailPct.textContent = total ? Math.round(withEmail / total * 100) + '%' : '0%';
   document.getElementById('stat-cities').textContent = cities.size;
   document.getElementById('stat-categories').textContent = categories.size + ' categories';
 }
@@ -642,12 +710,19 @@ function renderTable() {
   document.getElementById('table-count').textContent = `Showing ${filteredRecords.length} of ${allRecords.length} records`;
 }
 
+function renderTableColgroup() {
+  const cg = document.getElementById('table-cols');
+  if (!cg) return;
+  cg.innerHTML = COLUMNS.map(col => `<col style="width:${col.width || 'auto'}">`).join('');
+}
+
 function renderTableHead() {
+  renderTableColgroup();
   const tr = document.getElementById('table-head');
   tr.innerHTML = COLUMNS.map(col => {
     const sorted = sortCol === col.key;
     const arrow = sorted ? (sortDir === 'asc' ? '▲' : '▼') : '⇅';
-    return `<th class="${sorted ? 'sorted' : ''}" data-col="${col.key}" style="${col.width ? 'width:'+col.width : ''}">${col.label}<span class="sort-icon">${arrow}</span></th>`;
+    return `<th class="${sorted ? 'sorted' : ''}" data-col="${col.key}">${col.label}<span class="sort-icon">${arrow}</span></th>`;
   }).join('');
   tr.querySelectorAll('th').forEach(th => {
     th.addEventListener('click', () => {
@@ -660,6 +735,46 @@ function renderTableHead() {
   });
 }
 
+function renderCell(r, col) {
+  switch (col.key) {
+    case 'name':
+      return `<span title="${esc(r.name)}">${esc(r.name)}</span>`;
+    case 'address':
+      return r.address
+        ? `<span title="${esc(r.address)}">${esc(truncate(r.address, 36))}</span>`
+        : '<span style="color:var(--text2)">—</span>';
+    case 'category':
+      return esc(r.category);
+    case 'city':
+      return esc(r.city);
+    case 'rating':
+      return r.rating !== null ? r.rating.toFixed(1) : '—';
+    case 'reviews':
+      return r.reviews != null ? r.reviews.toLocaleString() : '—';
+    case 'website':
+      if (!r.website) return '<span style="color:var(--text2)">—</span>';
+      return `<a class="website-link" href="${esc(r.website)}" target="_blank" rel="noopener" title="${esc(r.website)}">${esc(websiteHost(r.website))}</a>`;
+    case 'phone':
+      return esc(r.phone) || '<span style="color:var(--text2)">—</span>';
+    case 'email':
+      return r.email
+        ? `<span title="${esc(r.email)}">${esc(r.email)}</span>`
+        : '<span style="color:var(--text2)">—</span>';
+    case 'emailSource':
+      return r.emailSource
+        ? `<span class="email-source" title="${esc(r.emailSource)}">${esc(truncate(r.emailSource, 18))}</span>`
+        : '<span style="color:var(--text2)">—</span>';
+    case 'leadScore': {
+      const cls = (r.leadScore || 'unknown').toLowerCase();
+      return `<span class="lead-badge lead-${cls}">${esc(r.leadScore || 'Unknown')}</span>`;
+    }
+    case 'source':
+      return `<span title="${esc(r.source)}">${esc(truncate(r.source, 22))}</span>`;
+    default:
+      return esc(r[col.key] ?? '');
+  }
+}
+
 function sortRecords() {
   if (!sortCol) return;
   filteredRecords.sort((a, b) => {
@@ -669,8 +784,13 @@ function sortRecords() {
       return sortDir === 'asc' ? va - vb : vb - va;
     }
     if (sortCol === 'leadScore') {
-      const order = {High: 0, Medium: 1, Low: 2, Unknown: 3};
+      const order = { High: 0, Medium: 1, Low: 2, Unknown: 3 };
       va = order[va] ?? 4; vb = order[vb] ?? 4;
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    if (sortCol === 'email') {
+      va = va ? 0 : 1;
+      vb = vb ? 0 : 1;
       return sortDir === 'asc' ? va - vb : vb - va;
     }
     va = String(va || '').toLowerCase();
@@ -684,17 +804,14 @@ function renderTableBody() {
   const page = filteredRecords.slice(start, start + PAGE_SIZE);
   const tbody = document.getElementById('table-body');
 
-  tbody.innerHTML = page.map(r => `<tr>
-    <td title="${esc(r.name)}">${esc(r.name)}</td>
-    <td>${esc(r.category)}</td>
-    <td>${esc(r.city)}</td>
-    <td>${r.rating !== null ? r.rating.toFixed(1) : '—'}</td>
-    <td>${r.reviews}</td>
-    <td>${r.website ? `<a class="website-link" href="${esc(r.website)}" target="_blank" rel="noopener">Visit</a>` : '<span style="color:var(--text2)">—</span>'}</td>
-    <td>${esc(r.phone) || '—'}</td>
-    <td><span class="lead-badge lead-${r.leadScore.toLowerCase()}">${esc(r.leadScore)}</span></td>
-    <td title="${esc(r.source)}">${esc(truncate(r.source, 30))}</td>
-  </tr>`).join('');
+  if (!page.length) {
+    tbody.innerHTML = `<tr><td colspan="${COLUMNS.length}" style="text-align:center;color:var(--text2);padding:2rem;">No records match filters</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = page.map(r =>
+    `<tr>${COLUMNS.map(col => `<td>${renderCell(r, col)}</td>`).join('')}</tr>`
+  ).join('');
 }
 
 function renderPagination() {
@@ -733,8 +850,21 @@ function getPageRange(current, total) {
 
 // ---- Export ----
 function exportCSV(records, filename) {
-  const headers = ['Business Name','Category','City','Address','Rating','Reviews','Website','Phone','Lead Score','Status','Source File'];
-  const rows = records.map(r => [r.name, r.category, r.city, r.address, r.rating ?? '', r.reviews, r.website, r.phone, r.leadScore, r.status, r.source]);
+  const headers = [...PROSPECTOR_CSV_HEADERS, 'Category', 'City', 'Source File'];
+  const rows = records.map(r => [
+    r.name,
+    r.address,
+    r.rating ?? '',
+    r.reviews ?? '',
+    r.website ?? '',
+    r.phone ?? '',
+    r.email ?? '',
+    r.emailSource ?? '',
+    r.leadScore ?? '',
+    r.category,
+    r.city,
+    r.source,
+  ]);
   const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);

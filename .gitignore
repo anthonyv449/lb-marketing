@@ -45,6 +45,13 @@ __pycache__/
 *$py.class
 *.pyc/
 venv/
+<<<<<<< HEAD
+=======
+.env
+outreach/.env
+outreach/businesses/
+outreach/logs/
+>>>>>>> origin/cursor/prospect-outreach-emails
 .venv/
 env/
 build/
